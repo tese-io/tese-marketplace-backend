@@ -17,6 +17,7 @@ import {
   createServiceZoneForFulfillmentSet,
   createStore
 } from './seed/seed-functions'
+import { ensureServiceFulfillmentSetForSeller } from '../workflows/fulfillment-set/ensure-service-fulfillment-set'
 
 export default async function seedMarketplaceData({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
@@ -60,6 +61,13 @@ export default async function seedMarketplaceData({ container }: ExecArgs) {
     region.id,
     serviceZone.id
   )
+  logger.info('Creating service fulfillment set (digital) and option...')
+  await ensureServiceFulfillmentSetForSeller(container, {
+    sellerId: seller.id,
+    sellerName: seller.name,
+    regionId: region.id,
+    locationId: stockLocation.id
+  })
   logger.info('Creating seller products...')
   await createSellerProducts(container, seller.id, salesChannel.id)
   logger.info('Creating inventory levels...')

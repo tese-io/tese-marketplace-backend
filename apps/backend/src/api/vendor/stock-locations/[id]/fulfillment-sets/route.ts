@@ -7,6 +7,7 @@ import { ContainerRegistrationKeys, Modules } from '@medusajs/framework/utils'
 import { IntermediateEvents } from '@mercurjs/framework'
 
 import { fetchSellerByAuthActorId } from '../../../../../shared/infra/http/utils'
+import { ensureServiceFulfillmentSetForSeller } from '../../../../../workflows/fulfillment-set/ensure-service-fulfillment-set'
 import { createLocationFulfillmentSetAndAssociateWithSellerWorkflow } from '../../../../../workflows/fulfillment-set/workflows'
 import { VendorCreateStockLocationFulfillmentSetType } from '../../validators'
 
@@ -72,6 +73,24 @@ export const POST = async (
       seller_id: seller.id
     }
   })
+
+  if (req.validatedBody.type === 'shipping') {
+    const {
+      data: [region]
+    } = await query.graph({
+      entity: 'region',
+      fields: ['id'],
+      variables: { take: 1 }
+    })
+    if (region?.id) {
+      await ensureServiceFulfillmentSetForSeller(req.scope, {
+        sellerId: seller.id,
+        sellerName: seller.name ?? 'Vendor',
+        regionId: region.id,
+        locationId: req.params.id
+      })
+    }
+  }
 
   const eventBus = req.scope.resolve(Modules.EVENT_BUS)
   await eventBus.emit({

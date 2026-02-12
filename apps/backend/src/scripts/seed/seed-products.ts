@@ -597,5 +597,66 @@ export const productsToInsert = [
         url: 'https://i.imgur.com/zIcEOTS.png'
       }
     ]
+  },
+  // Sample services (storefront shows Service badge, Request quote, price range, Service delivery section)
+  {
+    title: 'Corporate Carbon Footprint (Scope 1 & 2)',
+    handle: 'corporate-carbon-footprint-scope-1-2',
+    subtitle: 'Annual GHG inventory and report',
+    description:
+      'Annual corporate carbon footprint (Scope 1 & 2) with activity data review, emission factors and GHG Protocol alignment. Deliverables: report and Excel inventory.',
+    is_giftcard: false,
+    status: ProductStatus.PUBLISHED,
+    thumbnail: '',
+    discountable: false,
+    metadata: {
+      listing_type: 'service',
+      request_quote_only: true,
+      duration_text: '1–2 weeks',
+      price_range_min: 500,
+      price_range_max: 2000
+    },
+    variants: [
+      {
+        title: 'Default',
+        allow_backorder: true,
+        manage_inventory: false,
+        variant_rank: 0,
+        options: {},
+        prices: [{ currency_code: 'eur', amount: 0 }]
+      }
+    ],
+    options: [],
+    images: []
+  },
+  {
+    title: 'ESG Consulting Session',
+    handle: 'esg-consulting-session',
+    subtitle: 'Strategy and reporting guidance',
+    description:
+      'One-on-one ESG consulting session: materiality, reporting framework alignment (GRI, SASB, TCFD), and action plan. Ideal for SMEs starting their sustainability journey.',
+    is_giftcard: false,
+    status: ProductStatus.PUBLISHED,
+    thumbnail: '',
+    discountable: false,
+    metadata: {
+      listing_type: 'service',
+      request_quote_only: true,
+      duration_text: '1 hour',
+      price_range_min: 150,
+      price_range_max: 300
+    },
+    variants: [
+      {
+        title: 'Default',
+        allow_backorder: true,
+        manage_inventory: false,
+        variant_rank: 0,
+        options: {},
+        prices: [{ currency_code: 'eur', amount: 0 }]
+      }
+    ],
+    options: [],
+    images: []
   }
 ]
