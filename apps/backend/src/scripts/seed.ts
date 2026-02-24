@@ -2,6 +2,7 @@ import { ExecArgs } from '@medusajs/framework/types'
 import { ContainerRegistrationKeys } from '@medusajs/framework/utils'
 
 import {
+  cleanupLegacySeedProducts,
   createConfigurationRules,
   createDefaultCommissionLevel,
   createInventoryItemStockLevels,
@@ -68,6 +69,8 @@ export default async function seedMarketplaceData({ container }: ExecArgs) {
     regionId: region.id,
     locationId: stockLocation.id
   })
+  logger.info('Cleaning up legacy seed products...')
+  await cleanupLegacySeedProducts(container)
   logger.info('Creating seller products...')
   await createSellerProducts(container, seller.id, salesChannel.id)
   logger.info('Creating inventory levels...')

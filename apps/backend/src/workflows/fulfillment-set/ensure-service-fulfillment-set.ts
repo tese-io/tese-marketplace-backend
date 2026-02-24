@@ -103,7 +103,7 @@ export async function ensureServiceFulfillmentSetForSeller(
       data: [
         {
           fulfillment_set_id: digitalSet.id,
-          name: 'Europe',
+          name: 'Europe (Service)',
           geo_zones: COUNTRIES.map((c) => ({
             type: 'country',
             country_code: c

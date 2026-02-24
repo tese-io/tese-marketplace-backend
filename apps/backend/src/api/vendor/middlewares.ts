@@ -23,6 +23,14 @@ import { vendorPayoutAccountMiddlewares } from './payout-account/middlewares'
 import { vendorPayoutMiddlewares } from './payouts/middlewares'
 import { vendorPriceListsMiddlewares } from './price-lists/middlewares'
 import { vendorPricePreferencesRoutesMiddlewares } from './price-preferences/middlewares'
+// Temporarily disabled - modules not ready
+// import { vendorRfqMiddlewares } from './rfq/middlewares'
+// import { vendorServicesMiddlewares } from './services/middlewares'
+// import { vendorQuotationsMiddlewares } from './quotations/middlewares'
+// import { vendorNegotiationsMiddlewares } from './negotiations/middlewares'
+// import { vendorEscrowMiddlewares } from './escrow/middlewares'
+// import { vendorServiceOrdersMiddlewares } from './service-orders/middlewares'
+// import { vendorDisputesMiddlewares } from './disputes/middlewares'
 import { vendorProductCategoriesMiddlewares } from './product-categories/middlewares'
 import { vendorProductCollectionsMiddlewares } from './product-collections/middlewares'
 import { vendorProductTagsMiddlewares } from './product-tags/middlewares'
@@ -127,5 +135,13 @@ export const vendorMiddlewares: MiddlewareRoute[] = [
   ...vendorNotificationMiddlewares,
   ...vendorCommissionMiddlewares,
   ...vendorAttributeMiddlewares,
-  ...vendorPricePreferencesRoutesMiddlewares
+  ...vendorPricePreferencesRoutesMiddlewares,
+  // Temporarily disabled - modules not ready
+  // ...vendorRfqMiddlewares,
+  // ...vendorServicesMiddlewares,
+  // ...vendorQuotationsMiddlewares,
+  // ...vendorNegotiationsMiddlewares,
+  // ...vendorEscrowMiddlewares,
+  // ...vendorServiceOrdersMiddlewares,
+  // ...vendorDisputesMiddlewares
 ]

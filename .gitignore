@@ -21,6 +21,8 @@ coverage
 # Misc
 .DS_Store
 *.pem
+credential.txt
+**/credential.txt
 
 # Debug
 npm-debug.log*

@@ -80,7 +80,7 @@ export const POST = async (
     } = await query.graph({
       entity: 'region',
       fields: ['id'],
-      variables: { take: 1 }
+      pagination: { take: 1 }
     })
     if (region?.id) {
       await ensureServiceFulfillmentSetForSeller(req.scope, {

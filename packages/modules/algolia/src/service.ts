@@ -137,6 +137,30 @@ class AlgoliaModuleService {
       attributesToUpdate: { ...entity },
     });
   }
+
+  search(params: {
+    index: IndexType;
+    query: string;
+    filters?: string;
+    page?: number;
+    hitsPerPage?: number;
+    facets?: string[];
+    attributesToRetrieve?: string[];
+  }) {
+    return this.algolia_.search({
+      requests: [
+        {
+          indexName: params.index,
+          query: params.query,
+          filters: params.filters,
+          page: params.page ?? 0,
+          hitsPerPage: params.hitsPerPage ?? 12,
+          facets: params.facets,
+          attributesToRetrieve: params.attributesToRetrieve,
+        },
+      ],
+    });
+  }
 }
 
 export default AlgoliaModuleService;

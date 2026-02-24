@@ -1,0 +1,25 @@
+{
+  "name": "@mercurjs/escrow-payment",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "rimraf dist && tsc --build",
+    "migration:initial": "MIKRO_ORM_CLI_CONFIG=./mikro-orm.config.dev.ts medusa-mikro-orm migration:create --initial",
+    "migration:create": "MIKRO_ORM_CLI_CONFIG=./mikro-orm.config.dev.ts medusa-mikro-orm migration:create",
+    "migration:up": "MIKRO_ORM_CLI_CONFIG=./mikro-orm.config.dev.ts medusa-mikro-orm migration:up",
+    "orm:cache:clear": "MIKRO_ORM_CLI_CONFIG=./mikro-orm.config.dev.ts medusa-mikro-orm cache:clear"
+  },
+  "devDependencies": {
+    "@medusajs/framework": "2.8.6",
+    "@medusajs/test-utils": "2.8.6",
+    "@mercurjs/framework": "*",
+    "@mikro-orm/cli": "6.4.3",
+    "@mikro-orm/core": "6.4.3",
+    "@mikro-orm/migrations": "6.4.3",
+    "@mikro-orm/postgresql": "6.4.3"
+  }
+}
