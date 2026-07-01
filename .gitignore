@@ -18,6 +18,9 @@ coverage
 **/build
 **/dist
 
+# Medusa build artifacts
+**/.medusa
+
 # Misc
 .DS_Store
 *.pem
