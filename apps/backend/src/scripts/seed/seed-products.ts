@@ -1,601 +1,682 @@
 import { ProductStatus } from '@medusajs/framework/utils'
 
+// B2B / industrial sourcing catalog. Each product models a tradable
+// commodity or material with procurement metadata (unit, MOQ, origin,
+// lead time, certifications, embodied CO2) that the storefront PDP and
+// the AI sourcing engine consume as curated candidates.
+const img = (seed: string) =>
+  `https://picsum.photos/seed/${seed}/900/700`
+
+const SOLAR_KIT_DESCRIPTION =
+  'Complete rooftop and commercial solar kits combining modules, inverters, mounting and balance-of-system components. Compare verified suppliers on tese.io — select a brand to view MOQ, efficiency, warranty and quote-ready specs. Suitable for residential rooftops, C&I projects and microgrid deployments.'
+
 export const productsToInsert = [
   {
-    title: 'AIR FORCE 1 LUXE UNISEX Sneakers',
-    handle: 'air-force-1-luxe-unisex-sneakers',
-    subtitle: ' foam midsole with Air-Sole unit',
+    title: 'Hot-Rolled Steel Coil',
+    handle: 'hot-rolled-steel-coil',
+    subtitle: 'Structural carbon steel coil, mill-certified',
     description:
-      'The iconic Air Force 1 with premium materials and enhanced comfort. Features a full-grain leather upper',
+      'Hot-rolled carbon steel coil suitable for structural fabrication, automotive and general engineering. Supplied with EN 10204 3.1 mill test certificates. Thickness 1.5–12mm, width up to 1500mm. Low-sulphur melt with traceable heat numbers.',
     is_giftcard: false,
     status: ProductStatus.PUBLISHED,
-    thumbnail:
-      'https://mercur-connect.s3.eu-central-1.amazonaws.com/AIR-FORCE-1-LUXE-UNISEX-1 -01JRYW1QY88H8T98HNPZF7NJTF.png',
-    options: [
-      {
-        title: 'Color',
-        values: ['White']
-      }
-    ],
+    thumbnail: img('hr-steel-coil'),
+    metadata: {
+      unit: 'metric ton',
+      moq: '25 MT',
+      origin: 'EU (Germany / Poland)',
+      lead_time_days: 21,
+      certifications: 'EN 10204 3.1, ISO 9001',
+      co2_kg_per_unit: 1850,
+      hs_code: '7208'
+    },
+    options: [{ title: 'Grade', values: ['S235JR', 'S355JR'] }],
     variants: [
       {
-        title: 'White',
-        allow_backorder: false,
+        title: 'S235JR',
+        allow_backorder: true,
         manage_inventory: true,
-        prices: [
-          {
-            amount: 99,
-            currency_code: 'eur'
-          }
-        ],
-        options: {
-          Color: 'White'
-        }
+        options: { Grade: 'S235JR' },
+        prices: [{ amount: 620, currency_code: 'eur' }]
+      },
+      {
+        title: 'S355JR',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { Grade: 'S355JR' },
+        prices: [{ amount: 685, currency_code: 'eur' }]
       }
     ],
     discountable: true,
-    images: [
-      {
-        url: 'https://mercur-connect.s3.eu-central-1.amazonaws.com/AIR-FORCE-1-LUXE-UNISEX-1 -01JRYW1QY88H8T98HNPZF7NJTF.png'
-      },
-      {
-        url: 'https://mercur-connect.s3.eu-central-1.amazonaws.com/AIR-FORCE-1-LUXE-UNISEX-2 -01JRYW1QY96TV72HCK602R8ASK.png'
-      }
-    ]
+    images: [{ url: img('hr-steel-coil') }, { url: img('hr-steel-coil-2') }]
   },
   {
-    title: 'New Runner Flag Sneakers',
-    handle: 'new-runner-flag',
-    subtitle: '',
+    title: 'Recycled Aluminium Ingots 99.7%',
+    handle: 'recycled-aluminium-ingots',
+    subtitle: 'Low-carbon secondary aluminium, 99.7% purity',
     description:
-      'Heritage-inspired running silhouette featuring distinctive flag details and national color accents. Combines lightweight cushioning, breathable materials, and nostalgic design elements for a unique statement piece with exceptional comfort.',
+      'Secondary (recycled) aluminium ingots cast from post-industrial scrap, 99.7% Al minimum. ~95% lower embodied carbon than primary aluminium. Ideal for die-casting, extrusion billet and deoxidation. Spectro analysis provided per lot.',
     is_giftcard: false,
     status: ProductStatus.PUBLISHED,
-    thumbnail:
-      'https://mercur-connect.s3.eu-central-1.amazonaws.com/New-Runner-Flag-1-01JRYW0TG1KQ5T688H810M9BE3.png',
-    discountable: true,
+    thumbnail: img('alu-ingot'),
+    metadata: {
+      unit: 'metric ton',
+      moq: '10 MT',
+      origin: 'EU (Netherlands)',
+      lead_time_days: 14,
+      certifications: 'ASI Performance Standard, ISO 14001',
+      co2_kg_per_unit: 560,
+      hs_code: '7601'
+    },
+    options: [{ title: 'Form', values: ['Ingot', 'Billet'] }],
     variants: [
       {
-        title: 'Brown / 41 / New',
-        allow_backorder: false,
+        title: 'Ingot',
+        allow_backorder: true,
         manage_inventory: true,
-        options: { Color: 'Brown', Size: '41', Condition: 'New' },
-        variant_rank: 0,
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 59
-          }
-        ]
+        options: { Form: 'Ingot' },
+        prices: [{ amount: 2200, currency_code: 'eur' }]
       },
       {
-        title: 'Brown / 40 / New',
-        allow_backorder: false,
+        title: 'Billet',
+        allow_backorder: true,
         manage_inventory: true,
-        options: { Color: 'Brown', Size: '40', Condition: 'New' },
-        variant_rank: 1,
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 59
-          }
-        ]
-      },
-      {
-        title: 'Brown / 39 / New',
-        allow_backorder: false,
-        manage_inventory: true,
-        variant_rank: 2,
-        options: { Color: 'Brown', Size: '39', Condition: 'New' },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 59
-          }
-        ]
-      },
-      {
-        title: 'Brown / 38 / New',
-        allow_backorder: false,
-        manage_inventory: true,
-        variant_rank: 3,
-        options: { Color: 'Brown', Size: '38', Condition: 'New' },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 59
-          }
-        ]
-      },
-      {
-        title: 'Brown / 41 / Used',
-        allow_backorder: false,
-        manage_inventory: true,
-        variant_rank: 4,
-        options: { Color: 'Brown', Size: '41', Condition: 'Used' },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 39
-          }
-        ]
-      },
-      {
-        title: 'Brown / 40 / Used',
-        allow_backorder: false,
-        manage_inventory: true,
-        variant_rank: 5,
-        options: { Color: 'Brown', Size: '40', Condition: 'Used' },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 39
-          }
-        ]
-      },
-      {
-        title: 'Brown / 39 / Used',
-        allow_backorder: false,
-        manage_inventory: true,
-        variant_rank: 5,
-        options: { Color: 'Brown', Size: '39', Condition: 'Used' },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 39
-          }
-        ]
-      },
-      {
-        title: 'Brown / 38 / Used',
-        allow_backorder: false,
-        manage_inventory: true,
-        variant_rank: 5,
-        options: { Color: 'Brown', Size: '38', Condition: 'Used' },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 39
-          }
-        ]
+        options: { Form: 'Billet' },
+        prices: [{ amount: 2380, currency_code: 'eur' }]
       }
     ],
-    options: [
-      {
-        title: 'Size',
-        values: ['38', '39', '40', '41']
-      },
-      {
-        title: 'Color',
-        values: ['Brown']
-      },
-      {
-        title: 'Condition',
-        values: ['New', 'Used']
-      }
-    ],
-    images: [
-      {
-        url: 'https://mercur-connect.s3.eu-central-1.amazonaws.com/New-Runner-Flag-1-01JRYW0TG1KQ5T688H810M9BE3.png'
-      }
-    ]
+    discountable: true,
+    images: [{ url: img('alu-ingot') }, { url: img('alu-ingot-2') }]
   },
   {
-    title: 'CLASSIC CUPSOLE Sneakers',
-    handle: 'classic-cupsole-sneakers',
-    subtitle: '',
-    description: 'Retro court style reimagined for today',
+    title: 'Stainless Steel Sheet',
+    handle: 'stainless-steel-sheet',
+    subtitle: 'Cold-rolled 2B finish, austenitic grades',
+    description:
+      'Cold-rolled stainless steel sheet with 2B finish for food processing, architecture and chemical equipment. Grades 304 and 316L. Excellent corrosion resistance and weldability. PED/AD2000 documentation available on request.',
     is_giftcard: false,
     status: ProductStatus.PUBLISHED,
-    thumbnail:
-      'https://mercur-connect.s3.eu-central-1.amazonaws.com/CLASSIC-CUPSOLE-1 -01JRYVZQBJ85B2MPZ3Q0KTBYGA.png',
-    discountable: true,
+    thumbnail: img('ss-sheet'),
+    metadata: {
+      unit: 'metric ton',
+      moq: '5 MT',
+      origin: 'EU (Italy)',
+      lead_time_days: 18,
+      certifications: 'EN 10204 3.1, PED 2014/68/EU',
+      co2_kg_per_unit: 2900,
+      hs_code: '7219'
+    },
+    options: [{ title: 'Grade', values: ['304', '316L'] }],
     variants: [
       {
-        title: 'White / Used / 41',
-        allow_backorder: false,
+        title: '304',
+        allow_backorder: true,
         manage_inventory: true,
-        variant_rank: 0,
-        options: {
-          Color: 'White',
-          Size: '41',
-          Condition: 'Used'
-        },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 59
-          }
-        ]
+        options: { Grade: '304' },
+        prices: [{ amount: 2950, currency_code: 'eur' }]
       },
       {
-        title: 'Black / Used / 41',
-        allow_backorder: false,
+        title: '316L',
+        allow_backorder: true,
         manage_inventory: true,
-        variant_rank: 1,
-        options: {
-          Color: 'Black',
-          Size: '41',
-          Condition: 'Used'
-        },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 69
-          }
-        ]
+        options: { Grade: '316L' },
+        prices: [{ amount: 3680, currency_code: 'eur' }]
       }
     ],
-    options: [
-      {
-        title: 'Size',
-        values: ['40', '41']
-      },
-      {
-        title: 'Color',
-        values: ['White', 'Black']
-      },
-      {
-        title: 'Condition',
-        values: ['New', 'Used']
-      }
-    ],
-    images: [
-      {
-        url: 'https://mercur-connect.s3.eu-central-1.amazonaws.com/CLASSIC-CUPSOLE-1 -01JRYVZQBJ85B2MPZ3Q0KTBYGA.png'
-      }
-    ]
+    discountable: true,
+    images: [{ url: img('ss-sheet') }, { url: img('ss-sheet-2') }]
   },
   {
-    title: 'STORM 96 2K LITE Sneakers',
-    handle: 'storm-96-2k-lite',
-    subtitle: '',
+    title: 'Recycled PET Flakes (Food-Grade)',
+    handle: 'recycled-pet-flakes',
+    subtitle: 'Hot-washed, food-contact approved rPET',
     description:
-      "Retro-futuristic design combining '90s athletic aesthetics with contemporary technology. Features sculpted, lightweight midsole, mixed material upper, and unique lacing system for stand-out street style with all-day wearability.",
+      'Hot-washed, decontaminated post-consumer PET flakes approved for food-contact applications. Clear and light-blue sortations available. IV 0.72–0.80 dl/g. Supports recycled-content targets for bottle-to-bottle and sheet extrusion.',
     is_giftcard: false,
     status: ProductStatus.PUBLISHED,
-    thumbnail:
-      'https://mercur-connect.s3.eu-central-1.amazonaws.com/STORM-96-2K-LITE-1-01JRYVZ58MYDM626NAX1E9ZDDQ.png',
-    discountable: true,
+    thumbnail: img('rpet-flakes'),
+    metadata: {
+      unit: 'metric ton',
+      moq: '20 MT',
+      origin: 'EU (France)',
+      lead_time_days: 12,
+      certifications: 'EFSA, EuCertPlast, GRS',
+      co2_kg_per_unit: 450,
+      hs_code: '3907'
+    },
+    options: [{ title: 'Sortation', values: ['Clear', 'Light Blue'] }],
     variants: [
       {
-        title: 'Black / 42',
-        allow_backorder: false,
+        title: 'Clear',
+        allow_backorder: true,
         manage_inventory: true,
-        variant_rank: 0,
-        options: {
-          Color: 'Black',
-          Size: '42'
-        },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 79
-          }
-        ]
+        options: { Sortation: 'Clear' },
+        prices: [{ amount: 980, currency_code: 'eur' }]
       },
       {
-        title: 'Black / 41',
-        allow_backorder: false,
+        title: 'Light Blue',
+        allow_backorder: true,
         manage_inventory: true,
-        variant_rank: 1,
-        options: {
-          Color: 'Black',
-          Size: '41'
-        },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 79
-          }
-        ]
+        options: { Sortation: 'Light Blue' },
+        prices: [{ amount: 920, currency_code: 'eur' }]
       }
     ],
-    options: [
-      { title: 'Size', values: ['41', '42'] },
-      { title: 'Color', values: ['Black'] }
-    ],
-    images: [
-      {
-        url: 'https://mercur-connect.s3.eu-central-1.amazonaws.com/STORM-96-2K-LITE-1-01JRYVZ58MYDM626NAX1E9ZDDQ.png'
-      }
-    ]
+    discountable: true,
+    images: [{ url: img('rpet-flakes') }, { url: img('rpet-flakes-2') }]
   },
   {
-    title: 'U574 UNISEX Sneakers',
-    handle: 'u574-unisex-sneakers',
-    subtitle: '',
+    title: 'HDPE Resin Pellets',
+    handle: 'hdpe-resin-pellets',
+    subtitle: 'Blow-moulding grade high-density polyethylene',
     description:
-      'Featuring the classic 574 silhouette with updated materials and cushioning. Includes ENCAP midsole technology for support and maximum durability, plus a suede/mesh upper for breathability and style.',
+      'Virgin and recycled-blend HDPE pellets for blow-moulding and injection. Consistent melt-flow index, high stiffness and chemical resistance. Available with up to 50% PCR content for packaging sustainability targets.',
     is_giftcard: false,
     status: ProductStatus.PUBLISHED,
-    thumbnail:
-      'https://mercur-connect.s3.eu-central-1.amazonaws.com/U574-UNISEX-1-01JRYVYJVR8ZWQF87V8NS2HHX9.png',
-    discountable: true,
+    thumbnail: img('hdpe-pellets'),
+    metadata: {
+      unit: 'metric ton',
+      moq: '22 MT (FTL)',
+      origin: 'EU (Belgium)',
+      lead_time_days: 10,
+      certifications: 'ISO 9001, REACH',
+      co2_kg_per_unit: 1800,
+      hs_code: '3901'
+    },
+    options: [{ title: 'PCR Content', values: ['Virgin', '30% PCR'] }],
     variants: [
       {
-        title: '37 / Orange / New',
-        allow_backorder: false,
+        title: 'Virgin',
+        allow_backorder: true,
         manage_inventory: true,
-        variant_rank: 0,
-        options: {
-          Color: 'Orange',
-          Size: '37',
-          Condition: 'New'
-        },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 87
-          }
-        ]
-      }
-    ],
-    options: [
-      { title: 'Color', values: ['Orange'] },
-      { title: 'Size', values: ['37'] },
-      { title: 'Condition', values: ['Used', 'New'] }
-    ],
-    images: [
-      {
-        url: 'https://mercur-connect.s3.eu-central-1.amazonaws.com/U574-UNISEX-1-01JRYVYJVR8ZWQF87V8NS2HHX9.png'
+        options: { 'PCR Content': 'Virgin' },
+        prices: [{ amount: 1180, currency_code: 'eur' }]
       },
       {
-        url: 'https://mercur-connect.s3.eu-central-1.amazonaws.com/U574-UNISEX-2-01JRYVYJVTX6NRM2CCEPR6T994.png'
+        title: '30% PCR',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { 'PCR Content': '30% PCR' },
+        prices: [{ amount: 1090, currency_code: 'eur' }]
       }
-    ]
+    ],
+    discountable: true,
+    images: [{ url: img('hdpe-pellets') }, { url: img('hdpe-pellets-2') }]
   },
   {
-    title: 'Air VaporMax 2023 Flyknit Triple Black Sneakers',
-    handle: 'air-vapormax-2023-flyknit-triple-black-sneakers',
-    subtitle: '',
+    title: 'Copper Cathode (LME Grade A)',
+    handle: 'copper-cathode-grade-a',
+    subtitle: '99.99% Cu, LME-registered brand',
     description:
-      'Revolutionary cushioning with VaporMax Air technology and lightweight Flyknit construction. The unique sole eliminates excess weight, while the sleek triple black colorway offers versatile styling options.',
+      'Electrolytic copper cathode, 99.99% purity, conforming to BS EN 1978:1998 Cu-CATH-1 and LME Grade A. For wire-rod, busbar and high-conductivity applications. Sourced from LME-registered brands with full chain-of-custody.',
     is_giftcard: false,
     status: ProductStatus.PUBLISHED,
-    thumbnail:
-      'https://mercur-connect.s3.eu-central-1.amazonaws.com/Air-VaporMax-2023-Flyknit-Triple-Black-1 -01JRYVXVMV7D60YFGHGCY7FD1K.png',
-    discountable: true,
+    thumbnail: img('copper-cathode'),
+    metadata: {
+      unit: 'metric ton',
+      moq: '5 MT',
+      origin: 'EU (Poland)',
+      lead_time_days: 7,
+      certifications: 'LME Grade A, BS EN 1978',
+      co2_kg_per_unit: 3500,
+      hs_code: '7403'
+    },
+    options: [{ title: 'Packaging', values: ['Bundled', 'Loose'] }],
     variants: [
       {
-        title: 'Black / 41 / New',
-        allow_backorder: false,
+        title: 'Bundled',
+        allow_backorder: true,
         manage_inventory: true,
-        variant_rank: 0,
-        options: { Color: 'Black', Size: '41', Condition: 'New' },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 99
-          }
-        ]
-      }
-    ],
-    options: [
-      { title: 'Color', values: ['Black'] },
-      { title: 'Size', values: ['41'] },
-      { title: 'Condition', values: ['Used', 'New'] }
-    ],
-    images: [
-      {
-        url: 'https://mercur-connect.s3.eu-central-1.amazonaws.com/Air-VaporMax-2023-Flyknit-Triple-Black-1 -01JRYVXVMV7D60YFGHGCY7FD1K.png'
+        options: { Packaging: 'Bundled' },
+        prices: [{ amount: 8600, currency_code: 'eur' }]
       },
       {
-        url: 'https://mercur-connect.s3.eu-central-1.amazonaws.com/Air-VaporMax-2023-Flyknit-Triple-Black-2 -01JRYVXVMZS1REFQNM6WKJWDPG.png'
-      }
-    ]
-  },
-  {
-    title: 'Reelwind Sneakers',
-    handle: 'reelwind-sneakers',
-    subtitle: '',
-    description:
-      'Performance-meets-lifestyle design with responsive cushioning and flexible support. Made with recycled materials, featuring a breathable upper and durable rubber outsole for all-day comfort.',
-    is_giftcard: false,
-    status: ProductStatus.PUBLISHED,
-    thumbnail:
-      'https://mercur-connect.s3.eu-central-1.amazonaws.com/Reelwind-1-01JRYVWVF8XVHG23RXMNAY2EFJ.png',
-    discountable: true,
-    variants: [
-      {
-        title: 'Red / 38',
-        allow_backorder: false,
+        title: 'Loose',
+        allow_backorder: true,
         manage_inventory: true,
-        variant_rank: 0,
-        options: { Color: 'Red', Size: '38' },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 59
-          }
-        ]
+        options: { Packaging: 'Loose' },
+        prices: [{ amount: 8520, currency_code: 'eur' }]
       }
     ],
-    options: [
+    discountable: true,
+    images: [{ url: img('copper-cathode') }, { url: img('copper-cathode-2') }]
+  },
+  {
+    title: 'Portland Cement CEM I 52.5N',
+    handle: 'portland-cement-cem-i',
+    subtitle: 'High early-strength ordinary Portland cement',
+    description:
+      'CEM I 52.5N ordinary Portland cement for high-strength structural concrete and precast. Conforms to EN 197-1. Bulk or 25kg bags. Lower-clinker CEM II/B-LL blend available to reduce embodied carbon.',
+    is_giftcard: false,
+    status: ProductStatus.PUBLISHED,
+    thumbnail: img('portland-cement'),
+    metadata: {
+      unit: 'metric ton',
+      moq: '30 MT',
+      origin: 'EU (Spain)',
+      lead_time_days: 9,
+      certifications: 'EN 197-1, CE',
+      co2_kg_per_unit: 820,
+      hs_code: '2523'
+    },
+    options: [{ title: 'Packaging', values: ['Bulk', '25kg Bags'] }],
+    variants: [
       {
-        title: 'Size',
-        values: ['38']
+        title: 'Bulk',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { Packaging: 'Bulk' },
+        prices: [{ amount: 105, currency_code: 'eur' }]
       },
       {
-        title: 'Color',
-        values: ['Red']
+        title: '25kg Bags',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { Packaging: '25kg Bags' },
+        prices: [{ amount: 128, currency_code: 'eur' }]
       }
     ],
-    images: [
-      {
-        url: 'https://mercur-connect.s3.eu-central-1.amazonaws.com/Reelwind-1-01JRYVWVF8XVHG23RXMNAY2EFJ.png'
-      }
-    ]
+    discountable: true,
+    images: [{ url: img('portland-cement') }, { url: img('portland-cement-2') }]
   },
   {
-    title: 'Cool Balance U9060EEE Sneakers',
-    handle: 'u9060eee',
-    subtitle: '',
+    title: 'Recycled Kraft Linerboard',
+    handle: 'recycled-kraft-linerboard',
+    subtitle: '100% recycled testliner for corrugated packaging',
     description:
-      'Modern interpretation of the classic running silhouette with exaggerated proportions and enhanced cushioning. Features a combination of premium suede and mesh with an angular, sculptural midsole design for contemporary street style.',
+      '100% recycled testliner and fluting medium for corrugated box production. Grammage 110–200 gsm. High burst and ring-crush strength. FSC Recycled certified, supporting circular packaging supply chains.',
     is_giftcard: false,
     status: ProductStatus.PUBLISHED,
-    thumbnail:
-      'https://mercur-connect.s3.eu-central-1.amazonaws.com/U9060EEE-1-01JRYVW83SET4B4ZYZVSK39FDF.png',
-    discountable: true,
+    thumbnail: img('kraft-linerboard'),
+    metadata: {
+      unit: 'metric ton',
+      moq: '20 MT',
+      origin: 'EU (Germany)',
+      lead_time_days: 15,
+      certifications: 'FSC Recycled, ISO 14001',
+      co2_kg_per_unit: 680,
+      hs_code: '4805'
+    },
+    options: [{ title: 'Grammage', values: ['140 gsm', '200 gsm'] }],
     variants: [
       {
-        title: 'Gray / Used',
-        allow_backorder: false,
+        title: '140 gsm',
+        allow_backorder: true,
         manage_inventory: true,
-        variant_rank: 1,
-        options: {
-          Color: 'Gray',
-          Condition: 'Used'
-        },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 39
-          }
-        ]
+        options: { Grammage: '140 gsm' },
+        prices: [{ amount: 520, currency_code: 'eur' }]
       },
       {
-        title: 'Gray / New',
-        allow_backorder: false,
+        title: '200 gsm',
+        allow_backorder: true,
         manage_inventory: true,
-        variant_rank: 0,
-        options: { Color: 'Gray', Condition: 'New' },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 79
-          }
-        ]
+        options: { Grammage: '200 gsm' },
+        prices: [{ amount: 560, currency_code: 'eur' }]
       }
     ],
-    options: [
+    discountable: true,
+    images: [{ url: img('kraft-linerboard') }, { url: img('kraft-linerboard-2') }]
+  },
+  {
+    title: 'Monocrystalline Solar Cells (M10)',
+    handle: 'monocrystalline-solar-cells',
+    subtitle: 'PERC M10 cells, 22.8% efficiency',
+    description:
+      'High-efficiency monocrystalline PERC solar cells, M10 (182mm) format, average efficiency 22.8%. For module assembly and renewable-energy projects. Low LID, tight binning, IEC-compliant. Priced per watt-peak.',
+    is_giftcard: false,
+    status: ProductStatus.PUBLISHED,
+    thumbnail: img('solar-cells'),
+    metadata: {
+      unit: 'watt-peak (Wp)',
+      moq: '100 kWp',
+      origin: 'EU assembled',
+      lead_time_days: 28,
+      certifications: 'IEC 60904, ISO 9001',
+      co2_kg_per_unit: 0.04,
+      hs_code: '8541'
+    },
+    options: [{ title: 'Efficiency', values: ['22.8%', '23.2%'] }],
+    variants: [
       {
-        title: 'Condition',
-        values: ['New', 'Used']
+        title: '22.8%',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { Efficiency: '22.8%' },
+        prices: [{ amount: 1, currency_code: 'eur' }]
       },
       {
-        title: 'Color',
-        values: ['Gray']
+        title: '23.2%',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { Efficiency: '23.2%' },
+        prices: [{ amount: 1, currency_code: 'eur' }]
       }
     ],
-    images: [
-      {
-        url: 'https://mercur-connect.s3.eu-central-1.amazonaws.com/U9060EEE-1-01JRYVW83SET4B4ZYZVSK39FDF.png'
-      }
-    ]
+    discountable: true,
+    images: [{ url: img('solar-cells') }, { url: img('solar-cells-2') }]
   },
   {
-    title: 'Brown Sneakers',
-    handle: 'brown-sneakers',
-    subtitle: 'Cosy',
+    title: 'Caustic Soda Flakes 99% (NaOH)',
+    handle: 'caustic-soda-flakes',
+    subtitle: 'Industrial-grade sodium hydroxide flakes',
     description:
-      'Classic brown sneakers with leather and suede upper, and a durable rubber sole. Timeless and versatile.',
+      'Sodium hydroxide (caustic soda) flakes, 99% min purity, for pulp & paper, water treatment, soap and chemical processing. Packed in 25kg PP bags on shrink-wrapped pallets. SDS and CoA provided per batch.',
     is_giftcard: false,
     status: ProductStatus.PUBLISHED,
-    thumbnail:
-      'https://mercur-connect.s3.eu-central-1.amazonaws.com/u2735941527_Product_photography_of_brown_Adidas_samba_Sneaker_80c8f007-dcfa-4e5b-b8ac-bf88851a7376_0-01JRWZZ5V9M2ZC0K0WSC96E4AZ.png',
-    discountable: true,
+    thumbnail: img('caustic-soda'),
+    metadata: {
+      unit: 'metric ton',
+      moq: '18 MT',
+      origin: 'EU (Czechia)',
+      lead_time_days: 16,
+      certifications: 'REACH, ISO 9001',
+      co2_kg_per_unit: 1100,
+      hs_code: '2815'
+    },
+    options: [{ title: 'Packaging', values: ['25kg Bags', '1 MT Big Bag'] }],
     variants: [
       {
-        title: 'Brown / New',
-        allow_backorder: false,
+        title: '25kg Bags',
+        allow_backorder: true,
         manage_inventory: true,
-        variant_rank: 0,
-        options: {
-          Color: 'Brown',
-          Condition: 'New'
-        },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 89
-          }
-        ]
-      }
-    ],
-    options: [
-      { title: 'Color', values: ['Brown'] },
-      { title: 'Condition', values: ['New'] }
-    ],
-    images: [
+        options: { Packaging: '25kg Bags' },
+        prices: [{ amount: 450, currency_code: 'eur' }]
+      },
       {
-        url: 'https://mercur-connect.s3.eu-central-1.amazonaws.com/u2735941527_Product_photography_of_brown_Adidas_samba_Sneaker_80c8f007-dcfa-4e5b-b8ac-bf88851a7376_0-01JRWZZ5V9M2ZC0K0WSC96E4AZ.png'
+        title: '1 MT Big Bag',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { Packaging: '1 MT Big Bag' },
+        prices: [{ amount: 430, currency_code: 'eur' }]
       }
-    ]
+    ],
+    discountable: true,
+    images: [{ url: img('caustic-soda') }, { url: img('caustic-soda-2') }]
   },
   {
-    title: 'Green high-tops',
-    handle: 'green-high-tops',
-    subtitle: '',
+    title: 'Recycled Cotton Yarn (Ne 20/1)',
+    handle: 'recycled-cotton-yarn',
+    subtitle: 'Mechanically recycled cotton blend yarn',
     description:
-      'Bold green high-tops with classic canvas upper and rubber sole. A timeless streetwear staple.',
+      'Open-end recycled cotton yarn, Ne 20/1, blended from pre-consumer textile waste. Reduces water and CO2 vs virgin cotton. For knits, denim and home textiles. GRS-certified with documented recycled content.',
     is_giftcard: false,
     status: ProductStatus.PUBLISHED,
-    thumbnail:
-      'https://mercur-connect.s3.eu-central-1.amazonaws.com/u2735941527_Product_photography_of_green_converse_Sneakers_no_1ef027ea-f31f-4996-b419-63f85716a277_1-01JRWZYCWYAD4QVMRRTFVWHHDK.png',
-    discountable: true,
+    thumbnail: img('cotton-yarn'),
+    metadata: {
+      unit: 'metric ton',
+      moq: '2 MT',
+      origin: 'EU (Italy)',
+      lead_time_days: 20,
+      certifications: 'GRS, OEKO-TEX',
+      co2_kg_per_unit: 2100,
+      hs_code: '5205'
+    },
+    options: [{ title: 'Recycled Content', values: ['50%', '80%'] }],
     variants: [
       {
-        title: 'Green / 40 / New',
-        allow_backorder: false,
+        title: '50%',
+        allow_backorder: true,
         manage_inventory: true,
-        variant_rank: 0,
-        options: { Color: 'Green', Size: '40', Condition: 'New' },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 99
-          }
-        ]
-      }
-    ],
-    options: [
-      { title: 'Color', values: ['Green'] },
-      { title: 'Size', values: ['40'] },
-      { title: 'Condition', values: ['Used', 'New'] }
-    ],
-    images: [
+        options: { 'Recycled Content': '50%' },
+        prices: [{ amount: 3200, currency_code: 'eur' }]
+      },
       {
-        url: 'https://mercur-connect.s3.eu-central-1.amazonaws.com/u2735941527_Product_photography_of_green_converse_Sneakers_no_1ef027ea-f31f-4996-b419-63f85716a277_1-01JRWZYCWYAD4QVMRRTFVWHHDK.png'
+        title: '80%',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { 'Recycled Content': '80%' },
+        prices: [{ amount: 3450, currency_code: 'eur' }]
       }
-    ]
+    ],
+    discountable: true,
+    images: [{ url: img('cotton-yarn') }, { url: img('cotton-yarn-2') }]
   },
   {
-    title: 'High Sneakers',
-    handle: 'high-sneakers',
-    subtitle: 'Purple, beige, and orange',
+    title: 'Polypropylene Woven Bags (50kg)',
+    handle: 'polypropylene-woven-bags',
+    subtitle: 'UV-stabilised PP bulk bags for dry goods',
     description:
-      'High Sneakers in a bold mix of purple, beige, and orange. Premium materials, iconic silhouette, and standout color blocking.',
+      'Laminated/unlaminated polypropylene woven bags for cement, grain, fertiliser and aggregates. 50kg capacity, UV-stabilised, custom printing available. Recyclable mono-material construction. Priced per unit.',
     is_giftcard: false,
     status: ProductStatus.PUBLISHED,
-    thumbnail: 'https://i.imgur.com/zIcEOTS.png',
-    discountable: true,
+    thumbnail: img('pp-bags'),
+    metadata: {
+      unit: 'unit',
+      moq: '50,000 units',
+      origin: 'EU (Poland)',
+      lead_time_days: 25,
+      certifications: 'ISO 9001, food-grade option',
+      co2_kg_per_unit: 0.18,
+      hs_code: '6305'
+    },
+    options: [{ title: 'Lamination', values: ['Laminated', 'Unlaminated'] }],
     variants: [
       {
-        title: 'High Sneakers',
-        allow_backorder: false,
+        title: 'Laminated',
+        allow_backorder: true,
         manage_inventory: true,
-        variant_rank: 0,
-        options: { Color: 'Purple' },
-        prices: [
-          {
-            currency_code: 'eur',
-            amount: 119
-          }
-        ]
+        options: { Lamination: 'Laminated' },
+        prices: [{ amount: 1, currency_code: 'eur' }]
+      },
+      {
+        title: 'Unlaminated',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { Lamination: 'Unlaminated' },
+        prices: [{ amount: 1, currency_code: 'eur' }]
       }
     ],
-    options: [
+    discountable: true,
+    images: [{ url: img('pp-bags') }, { url: img('pp-bags-2') }]
+  },
+  {
+    title: 'Solar Kit',
+    handle: 'solar-kit',
+    subtitle: 'Grid-tied rooftop kit — modules, inverter & BOS',
+    description: SOLAR_KIT_DESCRIPTION,
+    is_giftcard: false,
+    status: ProductStatus.PUBLISHED,
+    thumbnail: img('solar-kit-exide'),
+    metadata: {
+      catalog_handle: 'solar-kit',
+      catalog_title: 'Solar Kit',
+      is_catalog_primary: true,
+      brand_name: 'Exide',
+      brand_slug: 'exide',
+      unit: 'kit',
+      moq: '10 kits',
+      origin: 'EU (Germany)',
+      lead_time_days: 21,
+      certifications: 'IEC 61215, IEC 61730',
+      inverter_efficiency: 97,
+      module_efficiency: 21.5,
+      panel_wattage: '550 Wp',
+      warranty_years: 12,
+      sector_tags: ['energy']
+    },
+    options: [{ title: 'System size', values: ['5 kWp', '10 kWp'] }],
+    variants: [
       {
-        title: 'Color',
-        values: ['Purple']
+        title: '5 kWp',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { 'System size': '5 kWp' },
+        prices: [{ amount: 4200, currency_code: 'eur' }]
+      },
+      {
+        title: '10 kWp',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { 'System size': '10 kWp' },
+        prices: [{ amount: 7800, currency_code: 'eur' }]
       }
     ],
-    images: [
+    discountable: true,
+    images: [{ url: img('solar-kit-exide') }, { url: img('solar-kit-exide-2') }]
+  },
+  {
+    title: 'Solar Kit — Luminous',
+    handle: 'solar-kit-luminous',
+    subtitle: 'Luminous grid-tied rooftop kit',
+    description: SOLAR_KIT_DESCRIPTION,
+    is_giftcard: false,
+    status: ProductStatus.PUBLISHED,
+    thumbnail: img('solar-kit-luminous'),
+    metadata: {
+      catalog_handle: 'solar-kit',
+      brand_name: 'Luminous',
+      brand_slug: 'luminous',
+      unit: 'kit',
+      moq: '5 kits',
+      origin: 'India / EU distribution',
+      lead_time_days: 28,
+      certifications: 'IEC 61215, BIS',
+      inverter_efficiency: 90,
+      module_efficiency: 20.2,
+      panel_wattage: '540 Wp',
+      warranty_years: 10,
+      sector_tags: ['energy']
+    },
+    options: [{ title: 'System size', values: ['5 kWp', '8 kWp'] }],
+    variants: [
       {
-        url: 'https://i.imgur.com/zIcEOTS.png'
+        title: '5 kWp',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { 'System size': '5 kWp' },
+        prices: [{ amount: 3900, currency_code: 'eur' }]
+      },
+      {
+        title: '8 kWp',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { 'System size': '8 kWp' },
+        prices: [{ amount: 6100, currency_code: 'eur' }]
       }
-    ]
+    ],
+    discountable: true,
+    images: [{ url: img('solar-kit-luminous') }, { url: img('solar-kit-luminous-2') }]
+  },
+  {
+    title: 'Solar Kit — SolarEdge',
+    handle: 'solar-kit-solaredge',
+    subtitle: 'SolarEdge optimized DC kit',
+    description: SOLAR_KIT_DESCRIPTION,
+    is_giftcard: false,
+    status: ProductStatus.PUBLISHED,
+    thumbnail: img('solar-kit-solaredge'),
+    metadata: {
+      catalog_handle: 'solar-kit',
+      brand_name: 'SolarEdge',
+      brand_slug: 'solaredge',
+      unit: 'kit',
+      moq: '8 kits',
+      origin: 'EU (Israel / Netherlands)',
+      lead_time_days: 24,
+      certifications: 'IEC 62109, IEC 61215',
+      inverter_efficiency: 97,
+      module_efficiency: 21.8,
+      panel_wattage: '560 Wp',
+      warranty_years: 15,
+      sector_tags: ['energy']
+    },
+    options: [{ title: 'System size', values: ['6 kWp', '12 kWp'] }],
+    variants: [
+      {
+        title: '6 kWp',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { 'System size': '6 kWp' },
+        prices: [{ amount: 5100, currency_code: 'eur' }]
+      },
+      {
+        title: '12 kWp',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { 'System size': '12 kWp' },
+        prices: [{ amount: 9200, currency_code: 'eur' }]
+      }
+    ],
+    discountable: true,
+    images: [{ url: img('solar-kit-solaredge') }, { url: img('solar-kit-solaredge-2') }]
+  },
+  {
+    title: 'Solar Kit — Thinker',
+    handle: 'solar-kit-thinker',
+    subtitle: 'Thinker hybrid-ready solar kit',
+    description: SOLAR_KIT_DESCRIPTION,
+    is_giftcard: false,
+    status: ProductStatus.PUBLISHED,
+    thumbnail: img('solar-kit-thinker'),
+    metadata: {
+      catalog_handle: 'solar-kit',
+      brand_name: 'Thinker',
+      brand_slug: 'thinker',
+      unit: 'kit',
+      moq: '6 kits',
+      origin: 'EU (Poland)',
+      lead_time_days: 18,
+      certifications: 'IEC 61215, CE',
+      inverter_efficiency: 93,
+      module_efficiency: 20.8,
+      panel_wattage: '545 Wp',
+      warranty_years: 12,
+      sector_tags: ['energy']
+    },
+    options: [{ title: 'System size', values: ['5 kWp', '10 kWp'] }],
+    variants: [
+      {
+        title: '5 kWp',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { 'System size': '5 kWp' },
+        prices: [{ amount: 4050, currency_code: 'eur' }]
+      },
+      {
+        title: '10 kWp',
+        allow_backorder: true,
+        manage_inventory: true,
+        options: { 'System size': '10 kWp' },
+        prices: [{ amount: 7600, currency_code: 'eur' }]
+      }
+    ],
+    discountable: true,
+    images: [{ url: img('solar-kit-thinker') }, { url: img('solar-kit-thinker-2') }]
+  },
+  {
+    title: 'Chain-of-Custody Verification Service',
+    handle: 'chain-of-custody-verification',
+    subtitle: 'Third-party GRS / ISCC / ASI audit & documentation',
+    description:
+      'Independent chain-of-custody verification for recycled content, bio-based inputs and low-carbon material claims. Desk review plus on-site sampling, certificate issuance and buyer-ready evidence packs. Suitable for apparel, construction and energy supply chains.',
+    is_giftcard: false,
+    status: ProductStatus.PUBLISHED,
+    thumbnail: img('coc-service'),
+    metadata: {
+      unit: 'engagement',
+      moq: '1 site',
+      origin: 'EU (remote + on-site)',
+      lead_time_days: 10,
+      certifications: 'ISO 17020 aligned process',
+      listing_type: 'service',
+      sector_tags: ['energy', 'construction', 'textiles']
+    },
+    options: [{ title: 'Scope', values: ['Desk review', 'Full audit'] }],
+    variants: [
+      {
+        title: 'Desk review',
+        allow_backorder: true,
+        manage_inventory: false,
+        options: { Scope: 'Desk review' },
+        prices: [{ amount: 2500, currency_code: 'eur' }]
+      },
+      {
+        title: 'Full audit',
+        allow_backorder: true,
+        manage_inventory: false,
+        options: { Scope: 'Full audit' },
+        prices: [{ amount: 8500, currency_code: 'eur' }]
+      }
+    ],
+    discountable: false,
+    images: [{ url: img('coc-service') }, { url: img('coc-service-2') }]
   }
 ]

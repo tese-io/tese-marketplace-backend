@@ -60,6 +60,17 @@ export const vendorMiddlewares: MiddlewareRoute[] = [
     ],
   },
   {
+    // tese seller SSO provisioning: the claimable (not-yet-a-member) identity
+    // must reach this route to create/link its seller + member.
+    matcher: "/vendor/sellers/tese",
+    method: ["POST"],
+    middlewares: [
+      authenticate("seller", ["bearer", "session"], {
+        allowUnregistered: true,
+      }),
+    ],
+  },
+  {
     matcher: "/vendor/invites/accept",
     method: ["POST"],
     middlewares: [
@@ -72,11 +83,11 @@ export const vendorMiddlewares: MiddlewareRoute[] = [
     matcher: "/vendor/*",
     middlewares: [
       unlessBaseUrl(
-        /^\/vendor\/(sellers|invites\/accept)$/,
+        /^\/vendor\/(sellers(?:\/tese)?|invites\/accept)$/,
         checkSellerApproved(["bearer", "session"])
       ),
       unlessBaseUrl(
-        /^\/vendor\/(sellers|invites\/accept)$/,
+        /^\/vendor\/(sellers(?:\/tese)?|invites\/accept)$/,
         authenticate("seller", ["bearer", "session"], {
           allowUnregistered: false,
         })

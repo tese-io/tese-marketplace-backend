@@ -79,6 +79,33 @@ module.exports = defineConfig({
         ]
       : []),
     {
+      // Explicit auth module. Once declared we must re-list every provider we
+      // still want (emailpass) alongside the new tese-sso provider.
+      resolve: '@medusajs/medusa/auth',
+      options: {
+        providers: [
+          {
+            resolve: '@medusajs/medusa/auth-emailpass',
+            id: 'emailpass'
+          },
+          {
+            resolve: '@mercurjs/auth-tese-sso/providers/tese-sso',
+            id: 'tese-sso',
+            options: {
+              teseBackendUrl: process.env.TESE_BACKEND_URL
+            }
+          },
+          {
+            resolve: '@mercurjs/auth-tese-sso/providers/tese-sso-seller',
+            id: 'tese-sso-seller',
+            options: {
+              teseBackendUrl: process.env.TESE_BACKEND_URL
+            }
+          }
+        ]
+      }
+    },
+    {
       resolve: '@medusajs/medusa/payment',
       options: {
         providers: [

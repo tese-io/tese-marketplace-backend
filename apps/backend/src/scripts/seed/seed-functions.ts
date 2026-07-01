@@ -34,6 +34,68 @@ import { productsToInsert } from './seed-products'
 
 const countries = ['be', 'de', 'dk', 'se', 'fr', 'es', 'it', 'pl', 'cz', 'nl']
 
+export const SEED_SELLER_PROFILES = {
+  euromaterials: {
+    email: 'seller@mercurjs.com',
+    password: 'secret',
+    sellerName: 'EuroMaterials Trading',
+    memberName: 'Procurement Desk',
+  },
+  exide: {
+    email: 'exide-solar@tese.io',
+    password: 'secret',
+    sellerName: 'Exide Solar EU',
+    memberName: 'Exide Sales Desk',
+  },
+  luminous: {
+    email: 'luminous@tese.io',
+    password: 'secret',
+    sellerName: 'Luminous Energy Europe',
+    memberName: 'Luminous Supply',
+  },
+  solaredge: {
+    email: 'solaredge@tese.io',
+    password: 'secret',
+    sellerName: 'SolarEdge Distribution',
+    memberName: 'SolarEdge EU Sales',
+  },
+  thinker: {
+    email: 'thinker@tese.io',
+    password: 'secret',
+    sellerName: 'Thinker Renewables',
+    memberName: 'Thinker Procurement',
+  },
+} as const
+
+export type SeedSellerKey = keyof typeof SEED_SELLER_PROFILES
+
+/** Which seller owns each product listing (defaults to euromaterials). */
+export const PRODUCT_SELLER_KEY: Partial<
+  Record<string, SeedSellerKey>
+> = {
+  'solar-kit': 'exide',
+  'solar-kit-luminous': 'luminous',
+  'solar-kit-solaredge': 'solaredge',
+  'solar-kit-thinker': 'thinker',
+}
+
+export function groupProductHandlesBySeller(): Record<SeedSellerKey, string[]> {
+  const groups = Object.keys(SEED_SELLER_PROFILES).reduce(
+    (acc, key) => {
+      acc[key as SeedSellerKey] = []
+      return acc
+    },
+    {} as Record<SeedSellerKey, string[]>
+  )
+
+  for (const product of productsToInsert) {
+    const sellerKey = PRODUCT_SELLER_KEY[product.handle] || 'euromaterials'
+    groups[sellerKey].push(product.handle)
+  }
+
+  return groups
+}
+
 export async function createAdminUser(container: MedusaContainer) {
   const authService = container.resolve(Modules.AUTH)
   const userService = container.resolve(Modules.USER)
@@ -194,28 +256,44 @@ export async function createProductCategories(container: MedusaContainer) {
     input: {
       product_categories: [
         {
-          name: 'Sneakers',
-          is_active: true
+          name: 'Metals & Alloys',
+          is_active: true,
+          metadata: { sector_tags: ['industrial-materials'] }
         },
         {
-          name: 'Sandals',
-          is_active: true
+          name: 'Recycled Materials',
+          is_active: true,
+          metadata: { sector_tags: ['industrial-materials'] }
         },
         {
-          name: 'Boots',
-          is_active: true
+          name: 'Polymers & Plastics',
+          is_active: true,
+          metadata: { sector_tags: ['industrial-materials'] }
         },
         {
-          name: 'Sport',
-          is_active: true
+          name: 'Industrial Chemicals',
+          is_active: true,
+          metadata: { sector_tags: ['industrial-materials'] }
         },
         {
-          name: 'Accessories',
-          is_active: true
+          name: 'Construction Materials',
+          is_active: true,
+          metadata: { sector_tags: ['construction'] }
         },
         {
-          name: 'Tops',
-          is_active: true
+          name: 'Packaging',
+          is_active: true,
+          metadata: { sector_tags: ['construction', 'industrial-materials'] }
+        },
+        {
+          name: 'Renewable Energy',
+          is_active: true,
+          metadata: { sector_tags: ['energy'] }
+        },
+        {
+          name: 'Textiles & Fibres',
+          is_active: true,
+          metadata: { sector_tags: ['textiles'] }
         }
       ]
     }
@@ -228,24 +306,10 @@ export async function createProductCollections(container: MedusaContainer) {
   const { result } = await createCollectionsWorkflow(container).run({
     input: {
       collections: [
-        {
-          title: 'Luxury'
-        },
-        {
-          title: 'Vintage'
-        },
-        {
-          title: 'Casual'
-        },
-        {
-          title: 'Soho'
-        },
-        {
-          title: 'Streetwear'
-        },
-        {
-          title: 'Y2K'
-        }
+        { title: 'ISO Certified' },
+        { title: 'Recycled & Circular' },
+        { title: 'Bulk & Wholesale' },
+        { title: 'Low-Carbon' }
       ]
     }
   })
@@ -253,14 +317,30 @@ export async function createProductCollections(container: MedusaContainer) {
   return result
 }
 
-export async function createSeller(container: MedusaContainer) {
+export async function createNamedSeller(
+  container: MedusaContainer,
+  {
+    email,
+    password,
+    sellerName,
+    memberName,
+  }: {
+    email: string
+    password: string
+    sellerName: string
+    memberName: string
+  }
+) {
+  const sellerService = container.resolve(SELLER_MODULE)
+  const [existing] = await sellerService.listSellers({ email })
+  if (existing) {
+    return existing
+  }
+
   const authService = container.resolve(Modules.AUTH)
 
   const { authIdentity } = await authService.register('emailpass', {
-    body: {
-      email: 'seller@mercurjs.com',
-      password: 'secret'
-    }
+    body: { email, password },
   })
 
   const { result: seller } = await createSellerWorkflow.run({
@@ -268,16 +348,26 @@ export async function createSeller(container: MedusaContainer) {
     input: {
       auth_identity_id: authIdentity?.id,
       member: {
-        name: 'John Doe',
-        email: 'seller@mercurjs.com'
+        name: memberName,
+        email,
       },
       seller: {
-        name: 'MercurJS Store'
-      }
-    }
+        name: sellerName,
+      },
+    },
   })
 
   return seller
+}
+
+/** @deprecated Use createNamedSeller */
+export async function createSeller(container: MedusaContainer) {
+  return createNamedSeller(container, {
+    email: 'seller@mercurjs.com',
+    password: 'secret',
+    sellerName: 'EuroMaterials Trading',
+    memberName: 'Procurement Desk',
+  })
 }
 
 export async function createSellerStockLocation(
@@ -459,11 +549,42 @@ export async function createSellerShippingOption(
   return shippingOption
 }
 
-export async function createSellerProducts(
+export async function provisionMarketplaceSeller(
+  container: MedusaContainer,
+  salesChannelId: string,
+  regionId: string,
+  profile: (typeof SEED_SELLER_PROFILES)[SeedSellerKey]
+) {
+  const seller = await createNamedSeller(container, profile)
+  const stockLocation = await createSellerStockLocation(
+    container,
+    seller.id,
+    salesChannelId
+  )
+  const serviceZone = await createServiceZoneForFulfillmentSet(
+    container,
+    seller.id,
+    stockLocation.fulfillment_sets[0].id
+  )
+  await createSellerShippingOption(
+    container,
+    seller.id,
+    profile.sellerName,
+    regionId,
+    serviceZone.id
+  )
+
+  return { seller, stockLocation, serviceZone }
+}
+
+export async function createProductsForSeller(
   container: MedusaContainer,
   sellerId: string,
-  salesChannelId: string
+  salesChannelId: string,
+  handles: string[]
 ) {
+  if (!handles.length) return []
+
   const productService = container.resolve(Modules.PRODUCT)
   const collections = await productService.listProductCollections(
     {},
@@ -474,39 +595,145 @@ export async function createSellerProducts(
     { select: ['id', 'name'] }
   )
 
-  const randomCategory = () =>
-    categories[Math.floor(Math.random() * categories.length)]
-  const randomCollection = () =>
-    collections[Math.floor(Math.random() * collections.length)]
+  const categoryByHandle: Record<string, string> = {
+    'hot-rolled-steel-coil': 'Metals & Alloys',
+    'stainless-steel-sheet': 'Metals & Alloys',
+    'copper-cathode-grade-a': 'Metals & Alloys',
+    'recycled-aluminium-ingots': 'Recycled Materials',
+    'recycled-pet-flakes': 'Recycled Materials',
+    'recycled-cotton-yarn': 'Textiles & Fibres',
+    'hdpe-resin-pellets': 'Polymers & Plastics',
+    'caustic-soda-flakes': 'Industrial Chemicals',
+    'portland-cement-cem-i': 'Construction Materials',
+    'recycled-kraft-linerboard': 'Packaging',
+    'polypropylene-woven-bags': 'Packaging',
+    'monocrystalline-solar-cells': 'Renewable Energy',
+    'solar-kit': 'Renewable Energy',
+    'solar-kit-luminous': 'Renewable Energy',
+    'solar-kit-solaredge': 'Renewable Energy',
+    'solar-kit-thinker': 'Renewable Energy',
+    'chain-of-custody-verification': 'Recycled Materials',
+  }
+  const extraCategoriesByHandle: Record<string, string[]> = {
+    'recycled-kraft-linerboard': ['Construction Materials'],
+    'polypropylene-woven-bags': ['Construction Materials'],
+    'hot-rolled-steel-coil': ['Construction Materials'],
+  }
+  const sectorTagsByHandle: Record<string, string[]> = {
+    'chain-of-custody-verification': ['energy', 'construction', 'textiles'],
+    'recycled-kraft-linerboard': ['construction'],
+  }
+  const collectionByHandle: Record<string, string> = {
+    'recycled-aluminium-ingots': 'Low-Carbon',
+    'recycled-pet-flakes': 'Recycled & Circular',
+    'recycled-cotton-yarn': 'Recycled & Circular',
+    'recycled-kraft-linerboard': 'Recycled & Circular',
+    'monocrystalline-solar-cells': 'Low-Carbon',
+    'solar-kit': 'Low-Carbon',
+    'solar-kit-luminous': 'Low-Carbon',
+    'solar-kit-solaredge': 'Low-Carbon',
+    'solar-kit-thinker': 'Low-Carbon',
+  }
 
-  const toInsert = productsToInsert.map((p) => ({
-    ...p,
-    categories: [
-      {
-        id: randomCategory().id
+  const findCategory = (name?: string) =>
+    categories.find((c) => c.name === name) || categories[0]
+  const findCollection = (title?: string) =>
+    collections.find((c) => c.title === title) || collections[0]
+
+  const handleSet = new Set(handles)
+  const products = productsToInsert
+    .filter((p) => handleSet.has(p.handle))
+    .map((p) => {
+      const primaryCategory = findCategory(categoryByHandle[p.handle])
+      const extraNames = extraCategoriesByHandle[p.handle] || []
+      const extraCategories = extraNames
+        .map((name) => findCategory(name))
+        .filter((c) => c.id !== primaryCategory.id)
+      const categoryIds = [
+        { id: primaryCategory.id },
+        ...extraCategories.map((c) => ({ id: c.id })),
+      ]
+      const sectorTags = sectorTagsByHandle[p.handle]
+      const metadata = sectorTags
+        ? { ...(p.metadata || {}), sector_tags: sectorTags }
+        : p.metadata
+
+      return {
+        ...p,
+        metadata,
+        categories: categoryIds,
+        collection_id: findCollection(
+          collectionByHandle[p.handle] || 'ISO Certified'
+        ).id,
+        sales_channels: [{ id: salesChannelId }],
       }
-    ],
-    collection_id: randomCollection().id,
-    sales_channels: [
-      {
-        id: salesChannelId
-      }
-    ]
-  }))
+    })
 
   const { result } = await createProductsWorkflow.run({
     container,
     input: {
-      products: toInsert,
+      products,
       additional_data: {
-        seller_id: sellerId
-      }
-    }
+        seller_id: sellerId,
+      },
+    },
   })
 
   return result
 }
 
+/** @deprecated Use createProductsForSeller per seller batch */
+export async function createSellerProducts(
+  container: MedusaContainer,
+  sellerId: string,
+  salesChannelId: string
+) {
+  const handles = productsToInsert.map((p) => p.handle)
+  return createProductsForSeller(container, sellerId, salesChannelId, handles)
+}
+
+export async function createSellerInventoryLevels(
+  container: MedusaContainer,
+  sellerId: string,
+  stockLocationId: string
+) {
+  const knex = container.resolve(ContainerRegistrationKeys.PG_CONNECTION)
+
+  const productIds: string[] = await knex('seller_seller_product_product')
+    .where({ seller_id: sellerId })
+    .whereNull('deleted_at')
+    .pluck('product_id')
+
+  if (!productIds.length) return []
+
+  const variantIds: string[] = await knex('product_variant')
+    .whereIn('product_id', productIds)
+    .whereNull('deleted_at')
+    .pluck('id')
+
+  if (!variantIds.length) return []
+
+  const inventoryItemIds: string[] = await knex('product_variant_inventory_item')
+    .whereIn('variant_id', variantIds)
+    .pluck('inventory_item_id')
+
+  if (!inventoryItemIds.length) return []
+
+  const toCreate = inventoryItemIds.map((inventory_item_id) => ({
+    inventory_item_id,
+    location_id: stockLocationId,
+    stocked_quantity: Math.floor(Math.random() * 50) + 1,
+  }))
+
+  const { result } = await createInventoryLevelsWorkflow.run({
+    container,
+    input: { inventory_levels: toCreate },
+  })
+
+  return result
+}
+
+/** @deprecated Use createSellerInventoryLevels per seller */
 export async function createInventoryItemStockLevels(
   container: MedusaContainer,
   stockLocationId: string

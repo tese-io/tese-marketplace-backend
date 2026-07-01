@@ -10,6 +10,17 @@ import { storeWishlistMiddlewares } from "./wishlist/middlewares";
 
 export const storeMiddlewares: MiddlewareRoute[] = [
   {
+    // tese-SSO customer provisioning: allow the not-yet-registered (claimable)
+    // identity so it can create + link its customer record.
+    matcher: "/store/customers/tese",
+    method: ["POST"],
+    middlewares: [
+      authenticate("customer", ["bearer", "session"], {
+        allowUnregistered: true,
+      }),
+    ],
+  },
+  {
     matcher: "/store/reviews/*",
     middlewares: [authenticate("customer", ["bearer", "session"])],
   },

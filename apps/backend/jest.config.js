@@ -7,7 +7,10 @@ module.exports = {
       '@swc/jest',
       {
         jsc: {
-          parser: { syntax: 'typescript', decorators: true }
+          parser: { syntax: 'typescript', decorators: true },
+          // Pin target: @swc/jest defaults Node 20+ to "es2023", which the
+          // pinned @swc/core 1.5.7 does not understand ("unknown variant es2023").
+          target: 'es2022'
         }
       }
     ]
