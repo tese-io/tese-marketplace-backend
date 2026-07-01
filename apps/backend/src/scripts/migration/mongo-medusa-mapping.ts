@@ -100,30 +100,51 @@ function buildOptions (doc: MongoStoreProduct) {
 
 function buildVariants (doc: MongoStoreProduct, options: ReturnType<typeof buildOptions>) {
   const mongoVariants = Array.isArray(doc.variants) ? doc.variants : []
-  const optionTitle = options[0]?.title || 'Default'
+  const externalId = mongoId(doc._id)
+  const optionKeys = ['option1', 'option2', 'option3'] as const
+
+  const variantOptionsFor = (
+    variant: NonNullable<MongoStoreProduct['variants']>[number],
+    index: number
+  ) => {
+    const variantOptions: Record<string, string> = {}
+    for (let optIndex = 0; optIndex < options.length; optIndex++) {
+      const opt = options[optIndex]
+      const rawVal = variant[optionKeys[optIndex]]
+      const fallback =
+        opt.values?.[index] ??
+        opt.values?.[0] ??
+        'Default'
+      variantOptions[opt.title] =
+        rawVal != null && String(rawVal).trim() !== ''
+          ? String(rawVal)
+          : String(fallback)
+    }
+    return variantOptions
+  }
+
+  const uniqueSku = (_variant: NonNullable<MongoStoreProduct['variants']>[number], index: number) =>
+    `mongo-${externalId}-${index}`
 
   if (mongoVariants.length === 0) {
     return [{
       title: doc.title || 'Default',
+      sku: `mongo-${externalId}-0`,
       manage_inventory: false,
-      options: { [optionTitle]: 'Default' },
+      options: variantOptionsFor({}, 0),
       prices: [{ amount: 0, currency_code: 'usd' }]
     }]
   }
 
   return mongoVariants.map((variant, index) => {
-    const optionValue =
-      variant.option1 ||
-      variant.title ||
-      options[0]?.values?.[index] ||
-      'Default'
     const amount = parsePrice(variant.price) ?? 0
+    const variantOptions = variantOptionsFor(variant, index)
 
     return {
-      title: variant.title || String(optionValue) || `Variant ${index + 1}`,
-      sku: variant.sku,
+      title: variant.title || `Variant ${index + 1}`,
+      sku: uniqueSku(variant, index),
       manage_inventory: false,
-      options: { [optionTitle]: String(optionValue) },
+      options: variantOptions,
       prices: [{ amount, currency_code: 'usd' }]
     }
   })
