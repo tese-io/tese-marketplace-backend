@@ -6,7 +6,9 @@ export const adminSellerFields = [
   'name',
   'handle',
   'description',
-  'photo'
+  'photo',
+  'store_status',
+  'is_verified'
 ]
 
 export const adminSellerQueryConfig = {

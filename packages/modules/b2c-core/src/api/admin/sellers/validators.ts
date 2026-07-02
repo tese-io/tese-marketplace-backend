@@ -51,6 +51,7 @@ export const AdminUpdateSeller = z
     country_code: z.string().optional(),
     tax_id: z.string().optional(),
     store_status: z.nativeEnum(StoreStatus).optional(),
+    is_verified: z.boolean().optional(),
   })
   .strict();
 

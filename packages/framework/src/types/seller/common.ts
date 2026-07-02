@@ -7,6 +7,7 @@ export enum StoreStatus {
 export type SellerDTO = {
   id: string;
   store_status: StoreStatus;
+  is_verified: boolean;
   created_at: Date;
   updated_at: Date;
   name: string;

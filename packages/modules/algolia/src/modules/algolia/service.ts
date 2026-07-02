@@ -41,6 +41,8 @@ export const defaultProductSettings: IndexSettings = {
     'categories.handle',
     'filterOnly(categories.id)',
     'filterOnly(collection.id)',
+    // Trust
+    'seller.is_verified',
     // Scoping filters used by the storefront filter string
     'filterOnly(has_seller)',
     'filterOnly(seller.handle)',

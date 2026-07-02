@@ -8,6 +8,8 @@ import { SellerOnboarding } from "./onboarding";
 export const Seller = model.define("seller", {
   id: model.id({ prefix: "sel" }).primaryKey(),
   store_status: model.enum(StoreStatus).default(StoreStatus.ACTIVE),
+  // "tese Verified" supplier badge — admin-granted only (not vendor-editable)
+  is_verified: model.boolean().default(false),
   name: model.text().searchable(),
   handle: model.text().unique(),
   description: model.text().searchable().nullable(),

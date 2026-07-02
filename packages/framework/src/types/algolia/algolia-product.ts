@@ -80,6 +80,7 @@ export const AlgoliaProductValidator = z.object({
       id: z.string(),
       handle: z.string().nullish(),
       store_status: z.nativeEnum(StoreStatus).nullish(),
+      is_verified: z.boolean().nullish().default(false),
     })
     .nullable(),
   has_seller: z.boolean().default(false),

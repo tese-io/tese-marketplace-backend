@@ -70,7 +70,12 @@ async function selectProductSeller(
     data: [product]
   } = await query.graph({
     entity: 'product',
-    fields: ['seller.id', 'seller.handle', 'seller.store_status'],
+    fields: [
+      'seller.id',
+      'seller.handle',
+      'seller.store_status',
+      'seller.is_verified'
+    ],
     filters: {
       id: product_id
     }
@@ -80,7 +85,8 @@ async function selectProductSeller(
     ? {
         id: product.seller.id,
         handle: product.seller.handle,
-        store_status: product.seller.store_status
+        store_status: product.seller.store_status,
+        is_verified: Boolean(product.seller.is_verified)
       }
     : null
 }

@@ -23,6 +23,7 @@ export interface UpdateSellerDTO {
   handle?: string
   photo?: string
   store_status?: StoreStatus
+  is_verified?: boolean
 }
 
 export interface CreateMemberDTO {
