@@ -10,6 +10,9 @@ export const vendorSellerFields = [
   "postal_code",
   "country_code",
   "tax_id",
+  "website",
+  "company_type",
+  "is_verified",
 ];
 
 export const vendorSellerQueryConfig = {
