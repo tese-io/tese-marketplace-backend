@@ -24,6 +24,8 @@ export interface UpdateSellerDTO {
   photo?: string
   store_status?: StoreStatus
   is_verified?: boolean
+  website?: string
+  company_type?: string
 }
 
 export interface CreateMemberDTO {

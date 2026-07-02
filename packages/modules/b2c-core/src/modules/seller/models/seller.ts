@@ -22,6 +22,9 @@ export const Seller = model.define("seller", {
   postal_code: model.text().nullable(),
   country_code: model.text().nullable(),
   tax_id: model.text().nullable(),
+  website: model.text().nullable(),
+  // e.g. manufacturer | distributor | wholesaler | service_provider | startup
+  company_type: model.text().nullable(),
   members: model.hasMany(() => Member),
   invites: model.hasMany(() => MemberInvite),
   onboarding: model.hasOne(() => SellerOnboarding).nullable(),

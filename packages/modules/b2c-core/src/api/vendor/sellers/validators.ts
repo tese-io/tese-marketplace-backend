@@ -171,6 +171,17 @@ export const VendorUpdateSeller = z
     postal_code: z.string().optional(),
     country_code: z.string().optional(),
     tax_id: z.string().optional(),
+    website: z.string().url().optional().or(z.literal("")),
+    company_type: z
+      .enum([
+        "manufacturer",
+        "distributor",
+        "wholesaler",
+        "service_provider",
+        "startup",
+        "other",
+      ])
+      .optional(),
   })
   .strict();
 

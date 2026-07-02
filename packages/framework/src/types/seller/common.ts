@@ -22,6 +22,8 @@ export type SellerDTO = {
   tax_id: string | null;
   handle: string;
   photo: string | null;
+  website: string | null;
+  company_type: string | null;
   members?: Partial<MemberDTO>[];
 };
 

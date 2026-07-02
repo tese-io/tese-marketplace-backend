@@ -52,6 +52,17 @@ export const AdminUpdateSeller = z
     tax_id: z.string().optional(),
     store_status: z.nativeEnum(StoreStatus).optional(),
     is_verified: z.boolean().optional(),
+    website: z.string().url().optional().or(z.literal("")),
+    company_type: z
+      .enum([
+        "manufacturer",
+        "distributor",
+        "wholesaler",
+        "service_provider",
+        "startup",
+        "other",
+      ])
+      .optional(),
   })
   .strict();
 
