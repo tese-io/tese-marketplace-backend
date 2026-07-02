@@ -31,11 +31,6 @@ export const syncAlgoliaProductsStep = createStep(
       fields: ["id"],
     });
 
-    await algolia.batchDelete(
-      IndexType.PRODUCT,
-      productsToDelete.map((p) => p.id)
-    );
-
     const { data: publishedProducts } = await query.graph({
       entity: "product",
       filters: {
@@ -45,6 +40,19 @@ export const syncAlgoliaProductsStep = createStep(
     });
 
     const productsToInsert = publishedProducts.map((p) => p.id);
+
+    // Remove unpublished/soft-deleted products AND orphaned index records
+    // whose ids no longer exist in the database at all.
+    const publishedIds = new Set(productsToInsert);
+    const indexedIds = await algolia
+      .listObjectIds(IndexType.PRODUCT)
+      .catch(() => [] as string[]);
+    const idsToDelete = new Set([
+      ...productsToDelete.map((p) => p.id),
+      ...indexedIds.filter((id) => !publishedIds.has(id)),
+    ]);
+
+    await algolia.batchDelete(IndexType.PRODUCT, [...idsToDelete]);
     const productChunks: string[][] = [];
     for (let i = 0; i < productsToInsert.length; i += CHUNK_SIZE) {
       productChunks.push(productsToInsert.slice(i, i + CHUNK_SIZE));

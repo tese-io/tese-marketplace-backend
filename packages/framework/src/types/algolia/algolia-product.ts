@@ -24,7 +24,8 @@ export const AlgoliaProductValidator = z.object({
     .optional(),
   collection: z
     .object({
-      title: z.string(),
+      id: z.string().optional(),
+      title: z.string().nullish(),
     })
     .nullable()
     .optional(),
@@ -46,6 +47,7 @@ export const AlgoliaProductValidator = z.object({
       z.object({
         name: z.string(),
         id: z.string(),
+        handle: z.string().nullish(),
       })
     )
     .optional(),
@@ -54,6 +56,7 @@ export const AlgoliaProductValidator = z.object({
     .array(
       z.object({
         name: z.string(),
+        handle: z.string().nullish(),
         value: z.string(),
         is_filterable: z.boolean(),
         ui_component: z.string(),
@@ -79,6 +82,17 @@ export const AlgoliaProductValidator = z.object({
       store_status: z.nativeEnum(StoreStatus).nullish(),
     })
     .nullable(),
+  has_seller: z.boolean().default(false),
+  // Sustainability / procurement facets flattened from product.metadata
+  certifications: z.array(z.string()).default([]),
+  origin: z.string().nullable().default(null),
+  co2_kg_per_unit: z.coerce.number().nullable().default(null),
+  lead_time_days: z.coerce.number().nullable().default(null),
+  moq: z.string().nullable().default(null),
+  unit: z.string().nullable().default(null),
+  listing_type: z.enum(["product", "service"]).default("product"),
+  sectors: z.array(z.string()).default([]),
+  is_circular: z.boolean().default(false),
 });
 
 export const AlgoliaVariantValidator = z.object({

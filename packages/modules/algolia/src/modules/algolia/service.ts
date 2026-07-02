@@ -23,7 +23,30 @@ export const defaultProductSettings: IndexSettings = {
     'type.value',
     'categories.name',
     'collection.title',
-    'variants.title'
+    'variants.title',
+    'certifications',
+    'origin',
+    'unordered(description)'
+  ],
+  attributesForFaceting: [
+    // Sustainability facets (flattened from product.metadata at index time)
+    'certifications',
+    'sectors',
+    'origin',
+    'is_circular',
+    'listing_type',
+    'co2_kg_per_unit',
+    // Taxonomy
+    'categories.name',
+    'categories.handle',
+    'filterOnly(categories.id)',
+    'filterOnly(collection.id)',
+    // Scoping filters used by the storefront filter string
+    'filterOnly(has_seller)',
+    'filterOnly(seller.handle)',
+    'filterOnly(seller.store_status)',
+    'filterOnly(supported_countries)',
+    'filterOnly(variants.prices.currency_code)'
   ]
 }
 
@@ -48,6 +71,23 @@ class AlgoliaModuleService {
     return this.algolia_.indexExists({
       indexName: index
     })
+  }
+
+  async listObjectIds(index: IndexType): Promise<string[]> {
+    const ids: string[] = []
+
+    await this.algolia_.browseObjects<{ objectID: string }>({
+      indexName: index,
+      browseParams: {
+        attributesToRetrieve: ['objectID'],
+        hitsPerPage: 1000
+      },
+      aggregator: (response) => {
+        ids.push(...response.hits.map((hit) => hit.objectID))
+      }
+    })
+
+    return ids
   }
 
   updateSettings(index: IndexType, settings: IndexSettings) {
