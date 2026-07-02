@@ -4,6 +4,23 @@ import { createFindParams } from "@medusajs/medusa/api/utils/validators";
 
 import { buildHostAddress, Hosts, StoreStatus } from "@mercurjs/framework";
 
+// Only http(s) — a stored javascript:/data: URL is an XSS vector when a
+// panel renders it as an anchor href (React does not sanitize href).
+const httpUrl = z
+  .string()
+  .url()
+  .refine(
+    (value) => {
+      try {
+        const { protocol } = new URL(value);
+        return protocol === "http:" || protocol === "https:";
+      } catch {
+        return false;
+      }
+    },
+    { message: "Website must be an http(s) URL" }
+  );
+
 export type AdminSellerParamsType = z.infer<typeof AdminSellerParams>;
 export const AdminSellerParams = createFindParams({
   offset: 0,
@@ -52,7 +69,7 @@ export const AdminUpdateSeller = z
     tax_id: z.string().optional(),
     store_status: z.nativeEnum(StoreStatus).optional(),
     is_verified: z.boolean().optional(),
-    website: z.string().url().optional().or(z.literal("")),
+    website: httpUrl.optional().or(z.literal("")),
     company_type: z
       .enum([
         "manufacturer",

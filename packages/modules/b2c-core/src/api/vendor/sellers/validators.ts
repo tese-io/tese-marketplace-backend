@@ -2,6 +2,23 @@ import { z } from "zod";
 
 import { createSelectParams } from "@medusajs/medusa/api/utils/validators";
 
+// Only http(s) — a stored javascript:/data: URL is an XSS vector when a
+// panel renders it as an anchor href (React does not sanitize href).
+const httpUrl = z
+  .string()
+  .url()
+  .refine(
+    (value) => {
+      try {
+        const { protocol } = new URL(value);
+        return protocol === "http:" || protocol === "https:";
+      } catch {
+        return false;
+      }
+    },
+    { message: "Website must be an http(s) URL" }
+  );
+
 export type VendorGetSellerParamsType = z.infer<typeof VendorGetSellerParams>;
 export const VendorGetSellerParams = createSelectParams();
 
@@ -171,7 +188,7 @@ export const VendorUpdateSeller = z
     postal_code: z.string().optional(),
     country_code: z.string().optional(),
     tax_id: z.string().optional(),
-    website: z.string().url().optional().or(z.literal("")),
+    website: httpUrl.optional().or(z.literal("")),
     company_type: z
       .enum([
         "manufacturer",
