@@ -30,6 +30,9 @@ export type CatalogueCertification = {
 
 type CacheEntry = { at: number; data: CatalogueCertification[] }
 
+// Bounded: keys derive from user-controlled query params, so an unbounded map
+// would be a memory-exhaustion vector. Free-text searches are never cached.
+const MAX_CACHE_ENTRIES = 50
 const cache = new Map<string, CacheEntry>()
 
 export const isCertificationsCatalogueConfigured = () => Boolean(TESE_BACKEND_API_KEY)
@@ -45,15 +48,16 @@ export async function fetchCertificationsCatalogue(params: {
   const search = new URLSearchParams({ size: '200' })
   if (params.q) search.set('q', params.q)
   if (params.category) search.set('category', params.category)
-  const cacheKey = search.toString()
+  const query = search.toString()
 
-  const hit = cache.get(cacheKey)
+  const cacheable = !params.q
+  const hit = cacheable ? cache.get(query) : undefined
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
     return hit.data
   }
 
   const response = await fetch(
-    `${TESE_BACKEND_URL}/api/v3/certifications?${cacheKey}`,
+    `${TESE_BACKEND_URL}/api/v3/certifications?${query}`,
     {
       headers: { 'X-API-Key': TESE_BACKEND_API_KEY },
       cache: 'no-store',
@@ -82,6 +86,12 @@ export async function fetchCertificationsCatalogue(params: {
     aliases: Array.isArray(c.aliases) ? c.aliases.map(String) : [],
   }))
 
-  cache.set(cacheKey, { at: Date.now(), data: certifications })
+  if (cacheable) {
+    if (cache.size >= MAX_CACHE_ENTRIES && !cache.has(query)) {
+      const oldest = cache.keys().next().value
+      if (oldest !== undefined) cache.delete(oldest)
+    }
+    cache.set(query, { at: Date.now(), data: certifications })
+  }
   return certifications
 }
