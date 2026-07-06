@@ -21,6 +21,10 @@ export const storeMiddlewares: MiddlewareRoute[] = [
     ],
   },
   {
+    matcher: "/store/matrix/*",
+    middlewares: [authenticate("customer", ["bearer", "session"])],
+  },
+  {
     matcher: "/store/reviews/*",
     middlewares: [authenticate("customer", ["bearer", "session"])],
   },

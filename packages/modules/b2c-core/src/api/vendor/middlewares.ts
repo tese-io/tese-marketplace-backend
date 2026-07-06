@@ -93,7 +93,8 @@ export const vendorMiddlewares: MiddlewareRoute[] = [
         })
       ),
       unlessBaseUrl(
-        /^\/vendor\/(sellers|orders|fulfillment|invites\/accept)/,
+        // matrix: suspended sellers must still reach the support chat
+        /^\/vendor\/(sellers|orders|fulfillment|invites\/accept|matrix)/,
         storeActiveGuard
       ),
     ],
