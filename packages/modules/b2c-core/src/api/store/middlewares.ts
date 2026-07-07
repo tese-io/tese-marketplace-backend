@@ -25,6 +25,11 @@ export const storeMiddlewares: MiddlewareRoute[] = [
     middlewares: [authenticate("customer", ["bearer", "session"])],
   },
   {
+    matcher: "/store/tese-identity",
+    method: ["GET"],
+    middlewares: [authenticate("customer", ["bearer", "session"])],
+  },
+  {
     matcher: "/store/reviews/*",
     middlewares: [authenticate("customer", ["bearer", "session"])],
   },
