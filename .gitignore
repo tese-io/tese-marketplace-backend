@@ -18,6 +18,9 @@ coverage
 **/build
 **/dist
 
+# Medusa build artifacts
+**/.medusa
+
 # Misc
 .DS_Store
 *.pem
@@ -39,3 +42,8 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+#from yarn build
+apps/backend/public
+# runtime migration logs
+migration-logs/

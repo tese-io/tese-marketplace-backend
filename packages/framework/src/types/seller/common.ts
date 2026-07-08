@@ -7,6 +7,7 @@ export enum StoreStatus {
 export type SellerDTO = {
   id: string;
   store_status: StoreStatus;
+  is_verified: boolean;
   created_at: Date;
   updated_at: Date;
   name: string;
@@ -21,6 +22,8 @@ export type SellerDTO = {
   tax_id: string | null;
   handle: string;
   photo: string | null;
+  website: string | null;
+  company_type: string | null;
   members?: Partial<MemberDTO>[];
 };
 

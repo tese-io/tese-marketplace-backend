@@ -1,76 +1,47 @@
-FROM node:22-alpine AS base
-
-# Install system dependencies
-RUN apk update && apk add --no-cache \
-    libc6-compat \
-    git \
-    python3 \
-    make \
-    g++ \
-    curl
+FROM node:24-alpine AS base
 
 FROM base AS builder
-# Set working directory
+RUN apk update
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
-
-# Install global packages
 RUN yarn global add turbo
-
-# Copy all source files
 COPY . .
-
-# Prune the monorepo for just the api workspace
 RUN turbo prune api --docker
 
 FROM base AS installer
+RUN apk update
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy pruned lockfile and package.json files
 COPY --from=builder /app/out/json/ .
-
-# Install dependencies
 RUN yarn install
 
-# Copy pruned source code
 COPY --from=builder /app/out/full/ .
 
-# Build the project and admin panel
 RUN yarn turbo build
-# Build the admin panel for production
-WORKDIR /app/apps/backend
-RUN yarn build
 
 FROM base AS runner
 WORKDIR /app
 
-# Create non-root user (Alpine style)
-RUN addgroup --system --gid 1001 medusa && \
-    adduser --system --uid 1001 medusa
+RUN apk add --no-cache wget curl
 
-# Copy built application
-COPY --from=installer /app .
+RUN addgroup --system --gid 1001 medusa
+RUN adduser --system --uid 1001 medusa
 
-# Create necessary directories and set ownership
-RUN mkdir -p /app/apps/backend/static && \
-    chown -R medusa:medusa /app/apps/backend
+RUN mkdir -p /app/apps/backend/static
+RUN chown -R medusa:medusa /app/apps/backend
 
-# Switch to non-root user
 USER medusa
+COPY --from=installer --chown=medusa:medusa /app .
 
-# Set working directory to backend app
 WORKDIR /app/apps/backend
 
-# Environment variables
 ENV NODE_ENV=production
 ENV PORT=9000
 
-# Expose port
 EXPOSE 9000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
     CMD curl -f http://localhost:9000/health || exit 1
 
-# Start the application
-CMD ["yarn", "start"]
-
+CMD ["sh", "-c", "case \"$MIGRATE_LINKS\" in skip) LINK_FLAG='--skip-links';; all) LINK_FLAG='--execute-all-links';; *) LINK_FLAG='--execute-safe-links';; esac && yarn db:migrate $LINK_FLAG && if [ \"$SEED_DEMO_DATA\" = \"true\" ]; then yarn seed || true; fi && yarn start"]

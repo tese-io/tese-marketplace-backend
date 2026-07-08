@@ -24,7 +24,8 @@ export const AlgoliaProductValidator = z.object({
     .optional(),
   collection: z
     .object({
-      title: z.string(),
+      id: z.string().optional(),
+      title: z.string().nullish(),
     })
     .nullable()
     .optional(),
@@ -46,19 +47,16 @@ export const AlgoliaProductValidator = z.object({
       z.object({
         name: z.string(),
         id: z.string(),
+        handle: z.string().nullish(),
       })
     )
     .optional(),
   variants: z.any().nullable().default(null),
-  brand: z
-    .object({
-      name: z.string(),
-    })
-    .optional(),
   attribute_values: z
     .array(
       z.object({
         name: z.string(),
+        handle: z.string().nullish(),
         value: z.string(),
         is_filterable: z.boolean(),
         ui_component: z.string(),
@@ -82,8 +80,20 @@ export const AlgoliaProductValidator = z.object({
       id: z.string(),
       handle: z.string().nullish(),
       store_status: z.nativeEnum(StoreStatus).nullish(),
+      is_verified: z.boolean().nullish().default(false),
     })
     .nullable(),
+  has_seller: z.boolean().default(false),
+  // Sustainability / procurement facets flattened from product.metadata
+  certifications: z.array(z.string()).default([]),
+  origin: z.string().nullable().default(null),
+  co2_kg_per_unit: z.coerce.number().nullable().default(null),
+  lead_time_days: z.coerce.number().nullable().default(null),
+  moq: z.string().nullable().default(null),
+  unit: z.string().nullable().default(null),
+  listing_type: z.enum(["product", "service"]).default("product"),
+  sectors: z.array(z.string()).default([]),
+  is_circular: z.boolean().default(false),
 });
 
 export const AlgoliaVariantValidator = z.object({
@@ -102,7 +112,7 @@ export const AlgoliaVariantValidator = z.object({
   weight: z.number().nullish(),
   length: z.number().nullish(),
   height: z.number().nullish(),
-  wifth: z.number().nullish(),
+  width: z.number().nullish(),
   variant_rank: z.number().nullish(),
   options: z.array(
     z.object({

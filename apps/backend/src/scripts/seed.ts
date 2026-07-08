@@ -2,26 +2,29 @@ import { ExecArgs } from '@medusajs/framework/types'
 import { ContainerRegistrationKeys } from '@medusajs/framework/utils'
 
 import {
+  createAdminUser,
   createConfigurationRules,
   createDefaultCommissionLevel,
-  createInventoryItemStockLevels,
+  createProductsForSeller,
   createProductCategories,
   createProductCollections,
   createPublishableKey,
   createRegions,
   createSalesChannel,
-  createSeller,
-  createSellerProducts,
-  createSellerShippingOption,
-  createSellerStockLocation,
-  createServiceZoneForFulfillmentSet,
-  createStore
+  createSellerInventoryLevels,
+  createStore,
+  groupProductHandlesBySeller,
+  provisionMarketplaceSeller,
+  SEED_SELLER_PROFILES,
+  type SeedSellerKey,
 } from './seed/seed-functions'
 
 export default async function seedMarketplaceData({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
 
   logger.info('=== Configurations ===')
+  logger.info('Creating admin user...')
+  await createAdminUser(container)
   logger.info('Creating default sales channel...')
   const salesChannel = await createSalesChannel(container)
   logger.info('Creating default regions...')
@@ -38,38 +41,61 @@ export default async function seedMarketplaceData({ container }: ExecArgs) {
   await createProductCategories(container)
   logger.info('Creating product collections...')
   await createProductCollections(container)
-  logger.info('Creating seller...')
-  const seller = await createSeller(container)
-  logger.info('Creating seller stock location...')
-  const stockLocation = await createSellerStockLocation(
-    container,
-    seller.id,
-    salesChannel.id
-  )
-  logger.info('Creating service zone...')
-  const serviceZone = await createServiceZoneForFulfillmentSet(
-    container,
-    seller.id,
-    stockLocation.fulfillment_sets[0].id
-  )
-  logger.info('Creating seller shipping option...')
-  await createSellerShippingOption(
-    container,
-    seller.id,
-    seller.name,
-    region.id,
-    serviceZone.id
-  )
-  logger.info('Creating seller products...')
-  await createSellerProducts(container, seller.id, salesChannel.id)
-  logger.info('Creating inventory levels...')
-  await createInventoryItemStockLevels(container, stockLocation.id)
+
+  logger.info('Provisioning marketplace sellers...')
+  const sellerGroups = groupProductHandlesBySeller()
+  const provisioned: Record<
+    SeedSellerKey,
+    { sellerId: string; stockLocationId: string }
+  > = {} as Record<SeedSellerKey, { sellerId: string; stockLocationId: string }>
+
+  for (const sellerKey of Object.keys(SEED_SELLER_PROFILES) as SeedSellerKey[]) {
+    const profile = SEED_SELLER_PROFILES[sellerKey]
+    logger.info(`  → ${profile.sellerName}`)
+    const { seller, stockLocation } = await provisionMarketplaceSeller(
+      container,
+      salesChannel.id,
+      region.id,
+      profile
+    )
+    provisioned[sellerKey] = {
+      sellerId: seller.id,
+      stockLocationId: stockLocation.id,
+    }
+  }
+
+  logger.info('Creating seller product listings...')
+  for (const sellerKey of Object.keys(sellerGroups) as SeedSellerKey[]) {
+    const handles = sellerGroups[sellerKey]
+    if (!handles.length) continue
+    logger.info(`  → ${handles.length} listings for ${SEED_SELLER_PROFILES[sellerKey].sellerName}`)
+    await createProductsForSeller(
+      container,
+      provisioned[sellerKey].sellerId,
+      salesChannel.id,
+      handles
+    )
+  }
+
+  logger.info('Creating inventory levels per seller...')
+  for (const sellerKey of Object.keys(provisioned) as SeedSellerKey[]) {
+    await createSellerInventoryLevels(
+      container,
+      provisioned[sellerKey].sellerId,
+      provisioned[sellerKey].stockLocationId
+    )
+  }
+
   logger.info('Creating default commission...')
   await createDefaultCommissionLevel(container)
 
   logger.info('=== Finished ===')
   logger.info(`Publishable api key: ${apiKey.token}`)
-  logger.info(`Vendor panel access:`)
+  logger.info(`Admin panel access:`)
+  logger.info(`email: admin@mercurjs.com`)
+  logger.info(`pass: supersecret`)
+  logger.info(`Vendor panel access (primary):`)
   logger.info(`email: seller@mercurjs.com`)
   logger.info(`pass: secret`)
+  logger.info(`Solar kit vendors also seeded: exide-solar@tese.io, luminous@tese.io, solaredge@tese.io, thinker@tese.io (pass: secret)`)
 }
