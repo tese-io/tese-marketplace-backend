@@ -16,7 +16,7 @@ export async function fetchStoreData(
 
   const storeName = store?.name || "Mercur";
   const storefrontUrl =
-    process.env.STOREFRONT_URL || "https://mercurjs.com";
+    process.env.STOREFRONT_URL || "https://marketplace.tese.io";
 
   return {
     store_name: storeName,
