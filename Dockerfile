@@ -15,10 +15,12 @@ WORKDIR /app
 
 COPY --from=builder /app/out/json/ .
 ENV NODE_ENV=development
-RUN yarn install --frozen-lockfile --production=false
+ENV YARN_PRODUCTION=false
+RUN yarn install --production=false
 
 COPY --from=builder /app/out/full/ .
 
+RUN yarn add -W -D ts-node@^10.9.2 typescript@^5.6.2
 RUN yarn turbo build
 
 FROM base AS runner
