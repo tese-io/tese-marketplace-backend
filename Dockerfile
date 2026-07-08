@@ -14,7 +14,8 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY --from=builder /app/out/json/ .
-RUN yarn install
+ENV NODE_ENV=development
+RUN yarn install --frozen-lockfile --production=false
 
 COPY --from=builder /app/out/full/ .
 
