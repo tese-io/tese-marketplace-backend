@@ -108,7 +108,7 @@ export async function migrateMongoStoreProducts ({
   await client.connect()
   const db = client.db()
 
-  const query = {
+  const query: Record<string, unknown> = {
     review_status: 'APPROVED',
     isArchived: { $ne: true },
     title: { $exists: true, $nin: ['', null] }

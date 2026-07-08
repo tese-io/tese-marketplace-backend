@@ -331,7 +331,7 @@ export async function createNamedSeller(
     memberName: string
   }
 ) {
-  const sellerService = container.resolve(SELLER_MODULE)
+  const sellerService: any = container.resolve(SELLER_MODULE)
   const [existing] = await sellerService.listSellers({ email })
   if (existing) {
     return existing
