@@ -45,3 +45,5 @@ yarn-error.log*
 
 #from yarn build
 apps/backend/public
+# runtime migration logs
+migration-logs/
