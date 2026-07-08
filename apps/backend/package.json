@@ -45,6 +45,7 @@
     "@mercurjs/resend": "*",
     "@mercurjs/reviews": "*",
     "@mercurjs/stripe-tax-provider": "*",
+    "@tese/connect": "*",
     "@talkjs/react": "^0.1.11",
     "algoliasearch": "^5.20.2",
     "resend": "^4.1.2",

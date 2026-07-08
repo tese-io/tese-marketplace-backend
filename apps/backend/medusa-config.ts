@@ -52,6 +52,10 @@ module.exports = defineConfig({
     {
       resolve: '@mercurjs/resend',
       options: {}
+    },
+    {
+      resolve: '@tese/connect',
+      options: {}
     }
   ],
   modules: [
