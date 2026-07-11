@@ -1,26 +1,30 @@
-import { Modules } from "@medusajs/framework/utils";
+import { Modules } from "@medusajs/framework/utils"
 import {
   WorkflowResponse,
   createHook,
   createWorkflow,
   transform,
-} from "@medusajs/framework/workflows-sdk";
-import { createRemoteLinkStep } from "@medusajs/medusa/core-flows";
+} from "@medusajs/framework/workflows-sdk"
+import { createRemoteLinkStep, emitEventStep } from "@medusajs/medusa/core-flows"
 
-import { CreateOrderReturnRequestDTO, SELLER_MODULE } from "@mercurjs/framework";
-import { ORDER_RETURN_MODULE } from "../../../modules/order-return-request";
+import {
+  CreateOrderReturnRequestDTO,
+  OrderReturnRequestEvents,
+  SELLER_MODULE,
+} from "@mercurjs/framework"
+import { ORDER_RETURN_MODULE } from "../../../modules/order-return-request"
 
 import {
   createOrderReturnRequestStep,
   validateOrderReturnRequestStep,
-} from "../steps";
+} from "../steps"
 
 export const createOrderReturnRequestWorkflow = createWorkflow(
   "create-order-return-request",
   function (input: { data: CreateOrderReturnRequestDTO; seller_id: string }) {
-    validateOrderReturnRequestStep(input.data);
-    const request = createOrderReturnRequestStep(input.data);
-    const requestId = transform({ request }, ({ request }) => request.id);
+    validateOrderReturnRequestStep(input.data)
+    const request = createOrderReturnRequestStep(input.data)
+    const requestId = transform({ request }, ({ request }) => request.id)
 
     createRemoteLinkStep([
       {
@@ -39,17 +43,22 @@ export const createOrderReturnRequestWorkflow = createWorkflow(
           order_id: input.data.order_id,
         },
       },
-    ]);
+    ])
+
+    emitEventStep({
+      eventName: OrderReturnRequestEvents.CREATED,
+      data: { id: requestId },
+    })
 
     const orderReturnRequestCreatedHook = createHook(
       "orderReturnRequestCreated",
       {
         requestId: request.id,
       }
-    );
+    )
 
     return new WorkflowResponse(request, {
       hooks: [orderReturnRequestCreatedHook],
-    });
+    })
   }
-);
+)

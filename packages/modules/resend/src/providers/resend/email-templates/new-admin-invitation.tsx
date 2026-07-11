@@ -1,3 +1,5 @@
+import { TeseBrandedLayout, teseCtaStyle, teseHeadingStyle } from "./tese-branded-layout"
+
 interface EmailTemplateProps {
   data: {
     url: string;
@@ -10,18 +12,8 @@ export const NewAdminInviteEmailTemplate: React.FC<
   Readonly<EmailTemplateProps>
 > = ({ data }) => {
   return (
-    <div
-      style={{
-        maxWidth: 600,
-        margin: "0 auto",
-        fontFamily: "Arial, sans-serif",
-        color: "#222",
-        background: "#fff",
-        padding: 24,
-        borderRadius: 10,
-      }}
-    >
-      <h1 style={{ fontSize: "2rem", marginBottom: "8px" }}>
+    <TeseBrandedLayout>
+      <h1 style={teseHeadingStyle}>
         You are invited to be an Admin on {data.store_name}!
       </h1>
       <p style={{ fontSize: "1.1rem", marginBottom: "16px" }}>
@@ -29,19 +21,7 @@ export const NewAdminInviteEmailTemplate: React.FC<
         <br />
       </p>
       <div style={{ marginBottom: 24 }}>
-        <a
-          href={`${data.url}`}
-          style={{
-            display: "inline-block",
-            padding: "10px 24px",
-            background: "#222",
-            color: "#fff",
-            borderRadius: 6,
-            textDecoration: "none",
-            fontWeight: 600,
-            marginBottom: 8,
-          }}
-        >
+        <a href={`${data.url}`} style={teseCtaStyle}>
           Accept Invitation
         </a>
         <div style={{ fontSize: 13, color: "#555", marginTop: 8 }}>
@@ -60,6 +40,6 @@ export const NewAdminInviteEmailTemplate: React.FC<
         <div style={{ fontWeight: 600 }}>The {data.store_name} Team</div>
         <div style={{ color: "#888", marginTop: 4 }}>{data.storefront_url}</div>
       </div>
-    </div>
+    </TeseBrandedLayout>
   );
 };

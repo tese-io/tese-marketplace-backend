@@ -27,6 +27,7 @@ import {
 
 import { createPayoutReversalStep } from '../../payout/steps'
 import { refundSplitOrderPaymentWorkflow } from '../../split-order-payment/workflows'
+import { OrderRefundEvents } from '@mercurjs/framework'
 
 export const cancelValidateOrder = createStep(
   'cancel-validate-order',
@@ -102,7 +103,15 @@ export const cancelOrderWorkflow = createWorkflow(
       emitEventStep({
         eventName: OrderWorkflowEvents.CANCELED,
         data: { id: order.id }
-      })
+      }),
+      emitEventStep({
+        eventName: OrderRefundEvents.PROCESSED,
+        data: {
+          order_id: order.id,
+          amount: order.split_order_payment.captured_amount,
+          currency_code: order.currency_code
+        }
+      }).config({ name: 'emit-order-refund-processed' })
     )
 
     return new WorkflowResponse(order.id)
