@@ -31,7 +31,17 @@ export async function fetchProductsForCatalogSync (
       'variants.prices.*',
       'seller.id',
       'seller.name',
-      'seller.handle'
+      'seller.handle',
+      // Additive fields for the AI orchestrator's classifier (D20 / P1.9).
+      // These give the LLM the strongest taxonomy signal we have. All are
+      // resolved by Medusa's product graph resolver; the extension is safe
+      // because the receiver at ${ORCHESTRATOR_URL}/api/v1/marketplace/catalog/sync
+      // takes product as Dict[str, Any] and existing consumers only read the
+      // fields they know about.
+      'categories.*',
+      'collection.*',
+      'type.*',
+      'metafields.*'
     ],
     filters: { id: ids }
   })
