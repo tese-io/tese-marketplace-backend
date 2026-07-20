@@ -40,8 +40,7 @@ export async function fetchProductsForCatalogSync (
       // fields they know about.
       'categories.*',
       'collection.*',
-      'type.*',
-      'metafields.*'
+      'type.*'
     ],
     filters: { id: ids }
   })
