@@ -12,7 +12,11 @@ export const vendorStockLocationFields = [
   'address.postal_code',
   'address.metadata',
   '*fulfillment_sets',
-  '*fulfillment_providers'
+  '*fulfillment_providers',
+  'stock_location_geo.id',
+  'stock_location_geo.latitude',
+  'stock_location_geo.longitude',
+  'stock_location_geo.location_precision'
 ]
 
 export const vendorStockLocationQueryConfig = {

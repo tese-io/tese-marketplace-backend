@@ -7,6 +7,10 @@ import { createStockLocationsWorkflow } from "@medusajs/medusa/core-flows";
 
 import { IntermediateEvents } from "@mercurjs/framework";
 import { SELLER_MODULE } from "../../../modules/seller";
+import {
+  STOCK_LOCATION_GEO_MODULE,
+  StockLocationGeoModuleService,
+} from "../../../modules/stock-location-geo";
 
 import sellerStockLocationLink from "../../../links/seller-stock-location";
 import { fetchSellerByAuthActorId } from "../../../shared/infra/http/utils";
@@ -56,8 +60,10 @@ export const POST = async (
     req.scope
   );
 
+  const { geo, ...locationInput } = req.validatedBody;
+
   const { result } = await createStockLocationsWorkflow(req.scope).run({
-    input: { locations: [req.validatedBody] },
+    input: { locations: [locationInput] },
   });
 
   await remoteLink.create({
@@ -68,6 +74,24 @@ export const POST = async (
       stock_location_id: result[0].id,
     },
   });
+
+  if (geo) {
+    const geoService: StockLocationGeoModuleService = req.scope.resolve(
+      STOCK_LOCATION_GEO_MODULE
+    );
+    const [geoRecord] = await geoService.createStockLocationGeoes([
+      {
+        stock_location_id: result[0].id,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        location_precision: geo.location_precision,
+      },
+    ]);
+    await remoteLink.create({
+      [Modules.STOCK_LOCATION]: { stock_location_id: result[0].id },
+      [STOCK_LOCATION_GEO_MODULE]: { stock_location_geo_id: geoRecord.id },
+    });
+  }
 
   const eventBus = req.scope.resolve(Modules.EVENT_BUS);
   await eventBus.emit({

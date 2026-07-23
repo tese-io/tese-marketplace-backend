@@ -71,6 +71,31 @@ export type VendorCreateStockLocationType = z.infer<
   typeof VendorCreateStockLocation
 >
 /**
+ * @schema VendorUpsertStockLocationGeo
+ * type: object
+ * required:
+ *   - latitude
+ *   - longitude
+ *   - location_precision
+ * properties:
+ *   latitude:
+ *     type: number
+ *     description: Latitude of the warehouse (-90 to 90)
+ *   longitude:
+ *     type: number
+ *     description: Longitude of the warehouse (-180 to 180)
+ *   location_precision:
+ *     type: string
+ *     enum: [map_pinned, geocoded, country_centroid]
+ *     description: How the coordinates were obtained
+ */
+export const VendorUpsertStockLocationGeo = z.object({
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  location_precision: z.enum(['map_pinned', 'geocoded', 'country_centroid'])
+})
+
+/**
  * @schema VendorCreateStockLocation
  * type: object
  * required:
@@ -89,12 +114,15 @@ export type VendorCreateStockLocationType = z.infer<
  *     type: object
  *     nullable: true
  *     description: Additional metadata
+ *   geo:
+ *     $ref: "#/components/schemas/VendorUpsertStockLocationGeo"
  */
 export const VendorCreateStockLocation = z.object({
   name: z.preprocess((val: string) => val?.trim(), z.string()),
   address: UpsertStockLocationAddress.optional(),
   address_id: z.string().nullish(),
-  metadata: z.record(z.unknown()).nullish()
+  metadata: z.record(z.unknown()).nullish(),
+  geo: VendorUpsertStockLocationGeo.optional()
 })
 
 export type VendorUpdateStockLocationType = z.infer<
@@ -117,6 +145,8 @@ export type VendorUpdateStockLocationType = z.infer<
  *     type: object
  *     nullable: true
  *     description: Additional metadata
+ *   geo:
+ *     $ref: "#/components/schemas/VendorUpsertStockLocationGeo"
  */
 export const VendorUpdateStockLocation = z.object({
   name: z
@@ -124,7 +154,8 @@ export const VendorUpdateStockLocation = z.object({
     .optional(),
   address: UpsertStockLocationAddress.optional(),
   address_id: z.string().nullish(),
-  metadata: z.record(z.unknown()).nullish()
+  metadata: z.record(z.unknown()).nullish(),
+  geo: VendorUpsertStockLocationGeo.optional()
 })
 
 export type VendorCreateStockLocationFulfillmentSetType = z.infer<
