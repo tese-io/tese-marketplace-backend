@@ -79,7 +79,10 @@ export const POST = async (
     const geoService: StockLocationGeoModuleService = req.scope.resolve(
       STOCK_LOCATION_GEO_MODULE
     );
-    const [geoRecord] = await geoService.createStockLocationGeoes([
+    // Medusa's TypeScript declaration wrongly pluralizes StockLocationGeo → "Geoes",
+    // but the runtime pluralize() correctly returns "Geos". Cast to any to bypass
+    // the misleading .d.ts and call the actual runtime method name.
+    const [geoRecord] = await (geoService as any).createStockLocationGeos([
       {
         stock_location_id: result[0].id,
         latitude: geo.latitude,
