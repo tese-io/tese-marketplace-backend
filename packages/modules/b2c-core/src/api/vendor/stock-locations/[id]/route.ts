@@ -135,18 +135,22 @@ export const POST = async (
     const geoService: StockLocationGeoModuleService = req.scope.resolve(
       STOCK_LOCATION_GEO_MODULE
     )
-    const existing = await geoService.listStockLocationGeoes({
+    // Cast to any — Medusa's .d.ts wrongly pluralizes StockLocationGeo → "Geoes"
+    // but the runtime pluralize() correctly returns "Geos". See create route for
+    // the full note.
+    const geoSvc = geoService as any
+    const existing = await geoSvc.listStockLocationGeos({
       stock_location_id: req.params.id
     })
     if (existing.length > 0) {
-      await geoService.updateStockLocationGeoes({
+      await geoSvc.updateStockLocationGeos({
         id: existing[0].id,
         latitude: geo.latitude,
         longitude: geo.longitude,
         location_precision: geo.location_precision
       })
     } else {
-      const [geoRecord] = await geoService.createStockLocationGeoes([
+      const [geoRecord] = await geoSvc.createStockLocationGeos([
         {
           stock_location_id: req.params.id,
           latitude: geo.latitude,
@@ -228,11 +232,14 @@ export const DELETE = async (
   const geoService: StockLocationGeoModuleService = req.scope.resolve(
     STOCK_LOCATION_GEO_MODULE
   )
-  const existingGeo = await geoService.listStockLocationGeoes({
+  // Cast to any — Medusa's .d.ts wrongly pluralizes StockLocationGeo → "Geoes"
+  // but the runtime pluralize() correctly returns "Geos".
+  const geoSvc = geoService as any
+  const existingGeo = await geoSvc.listStockLocationGeos({
     stock_location_id: req.params.id
   })
   if (existingGeo.length > 0) {
-    await geoService.softDeleteStockLocationGeoes([existingGeo[0].id])
+    await geoSvc.softDeleteStockLocationGeos([existingGeo[0].id])
   }
 
   await deleteStockLocationsWorkflow(req.scope).run({
