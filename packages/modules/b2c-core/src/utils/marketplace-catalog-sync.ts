@@ -164,6 +164,7 @@ export async function fetchProductsForCatalogSync (
       'seller.id',
       'seller.name',
       'seller.handle',
+      'seller.metadata',
       // Additive fields for the AI orchestrator's classifier (D20 / P1.9).
       // These give the LLM the strongest taxonomy signal we have. All are
       // resolved by Medusa's product graph resolver; the extension is safe
@@ -180,17 +181,28 @@ export async function fetchProductsForCatalogSync (
   return (data || []).map((product: Record<string, unknown>) => {
     const seller = product.seller as Record<string, unknown> | undefined
     const metadata = (product.metadata || {}) as Record<string, unknown>
-    // Derive the tese tenant_id from the seller handle. The vendor-panel
-    // signup workflow (POST /vendor/sellers/tese) pins every seller's
-    // handle to `tese-${tenantId}`, so we can round-trip it back here
-    // without an additional lookup. Without this the orchestrator's
-    // projector persisted tenant_id: "" on every MarketplaceCatalog row,
-    // silently breaking any downstream query that filters catalog docs
-    // by tenant.
+    // Resolve the tese tenant_id for this seller. Two sources, tried in
+    // order:
+    //   1. seller.metadata.tese_tenant_id — the explicit, canonical link
+    //      written by POST /vendor/sellers/tese when the seller is created.
+    //      Doesn't depend on any naming convention.
+    //   2. seller.handle prefix — the legacy convention (handle format
+    //      "tese-<tenantId>") used to pin the store to a tenant before
+    //      metadata was carried explicitly. Kept as a fallback for older
+    //      tese-created sellers that pre-date the metadata field.
+    // Seed / demo sellers (e.g. EuroMaterials Trading, handle
+    // "euromaterials-trading") intentionally have neither — they're not
+    // linked to any tese tenant, so tenant_id stays empty which is the
+    // correct semantic answer.
+    const sellerMetadata = (seller?.metadata || {}) as Record<string, unknown>
     const handle = (seller?.handle || '') as string
-    const tenant_id = handle.startsWith('tese-')
+    const tenantFromMeta = typeof sellerMetadata.tese_tenant_id === 'string'
+      ? (sellerMetadata.tese_tenant_id as string)
+      : ''
+    const tenantFromHandle = handle.startsWith('tese-')
       ? handle.slice('tese-'.length)
       : ''
+    const tenant_id = tenantFromMeta || tenantFromHandle
     return {
       ...product,
       tenant_id,

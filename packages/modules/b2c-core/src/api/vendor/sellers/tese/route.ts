@@ -78,7 +78,18 @@ export const POST = async (
   if (!seller) {
     const { result } = await createSellerWorkflow(req.scope).run({
       input: {
-        seller: { name: meta.tese_tenant_name || handle, handle },
+        seller: {
+          name: meta.tese_tenant_name || handle,
+          handle,
+          // Persist the tese tenant_id explicitly on the seller record.
+          // The marketplace-catalog sync (fetchProductsForCatalogSync)
+          // reads seller.metadata.tese_tenant_id when populating the
+          // MarketplaceCatalog row's tenant_id field. The handle already
+          // carries the same id ("tese-<tenantId>"), but keying off
+          // metadata avoids depending on a naming convention downstream
+          // and stays robust if handles ever get renamed.
+          metadata: { tese_tenant_id: tenantId }
+        },
         member: { name, email, role: MemberRole.OWNER },
         auth_identity_id: authIdentityId,
       } as any,
