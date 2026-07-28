@@ -180,8 +180,20 @@ export async function fetchProductsForCatalogSync (
   return (data || []).map((product: Record<string, unknown>) => {
     const seller = product.seller as Record<string, unknown> | undefined
     const metadata = (product.metadata || {}) as Record<string, unknown>
+    // Derive the tese tenant_id from the seller handle. The vendor-panel
+    // signup workflow (POST /vendor/sellers/tese) pins every seller's
+    // handle to `tese-${tenantId}`, so we can round-trip it back here
+    // without an additional lookup. Without this the orchestrator's
+    // projector persisted tenant_id: "" on every MarketplaceCatalog row,
+    // silently breaking any downstream query that filters catalog docs
+    // by tenant.
+    const handle = (seller?.handle || '') as string
+    const tenant_id = handle.startsWith('tese-')
+      ? handle.slice('tese-'.length)
+      : ''
     return {
       ...product,
+      tenant_id,
       vendor_name: seller?.name || metadata.vendor_name,
       vendor: seller?.name,
       tags: Array.isArray(product.tags)
