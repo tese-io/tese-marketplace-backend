@@ -82,6 +82,37 @@ export async function fetchSellerCoverage(sellerId: string): Promise<CoverageRow
 
 
 /**
+ * List coverage rows for one specific product (subject.kind='product').
+ * Used by the seller's Coverage Overview page to show every activity code
+ * the classifier attached to their products, so the seller can see the
+ * full set of activities they're being surfaced for — not just the ones
+ * they explicitly self-declared.
+ */
+export async function fetchProductCoverage(productId: string): Promise<CoverageRow[]> {
+  const response = await fetch(
+    `${TESE_BACKEND_URL}/api/v3/marketplace/vendor-coverage/find`,
+    {
+      method: 'POST',
+      headers: _headers(),
+      body: JSON.stringify({
+        by_subject: {
+          subject: { kind: 'product', id: productId },
+          is_active: true,
+          limit: 500,
+        },
+      }),
+      cache: 'no-store',
+    }
+  )
+  const json = (await response.json().catch(() => ({}))) as { rows?: CoverageRow[]; error?: string }
+  if (!response.ok) {
+    throw new Error(json.error || `vendor-coverage/find (product) returned ${response.status}`)
+  }
+  return Array.isArray(json.rows) ? json.rows : []
+}
+
+
+/**
  * Add one activity code as coverage for a seller.
  * Source is always 'self_declared' + confidence 1.0 when the seller writes.
  * Server canonicalizes the code and rejects unknown/deprecated codes.
