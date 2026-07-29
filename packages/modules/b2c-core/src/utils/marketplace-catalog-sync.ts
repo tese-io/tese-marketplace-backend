@@ -8,6 +8,15 @@ export type SellerEnrichment = {
   warehouse_country?: string | null
   ship_to_countries?: string[]
   verified_certifications?: string[]
+  // Multi-warehouse (Phase 5) — parallel arrays over every warehouse
+  // the seller has pinned. Distance in the orchestrator's fuse_rank is
+  // now min(distance to each warehouse). The scalar latitude/longitude/
+  // warehouse_country above still get populated with the FIRST entry
+  // so downstream consumers that only read the singular fields keep
+  // working (backward compat).
+  warehouse_latitudes?: number[]
+  warehouse_longitudes?: number[]
+  warehouse_countries?: string[]
 }
 
 export type MarketplaceCatalogSyncPayload = {
@@ -63,6 +72,9 @@ export async function fetchSellerEnrichment (
       )
     })
     if (warehouses.length > 0) {
+      // Primary (backward-compat singular fields) = the first warehouse.
+      // Downstream buyer-facing UI reads warehouse_country + latitude +
+      // longitude as scalars; keep them behaving exactly as before.
       const primary = warehouses[0]
       enrichment.latitude = Number(primary.stock_location_geo.latitude)
       enrichment.longitude = Number(primary.stock_location_geo.longitude)
@@ -70,6 +82,14 @@ export async function fetchSellerEnrichment (
         primary.stock_location_geo.location_precision || null
       enrichment.warehouse_country =
         (primary?.address?.country_code || '').toUpperCase() || null
+
+      // Phase 5 multi-warehouse arrays — one entry per pinned warehouse
+      // maintained in same order across all three arrays.
+      enrichment.warehouse_latitudes = warehouses.map((w) => Number(w.stock_location_geo.latitude))
+      enrichment.warehouse_longitudes = warehouses.map((w) => Number(w.stock_location_geo.longitude))
+      enrichment.warehouse_countries = warehouses.map(
+        (w) => (w?.address?.country_code || '').toUpperCase() || ''
+      )
     }
   } catch (err) {
     // Non-fatal — leave warehouse fields unset
