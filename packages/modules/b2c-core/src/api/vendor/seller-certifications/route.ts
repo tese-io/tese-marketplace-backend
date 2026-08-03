@@ -108,7 +108,8 @@ export const POST = async (
   const remoteLink = req.scope.resolve(ContainerRegistrationKeys.REMOTE_LINK)
   const eventBus = req.scope.resolve(Modules.EVENT_BUS)
 
-  const { certification_slug, document_url, expires_at } = req.validatedBody
+  const { certification_slug, documents, document_url, expires_at } =
+    req.validatedBody
 
   if (isCertificationsCatalogueConfigured()) {
     const catalogue = await fetchCertificationsCatalogue()
@@ -132,11 +133,16 @@ export const POST = async (
     )
   }
 
+  // documents is the canonical field. document_url stays populated with
+  // the first entry's URL for backwards compat with any read path that
+  // still hasn't migrated to reading `documents[]`. The validator's
+  // transform guarantees documents.length >= 1 by this point.
   const [row] = await service.createSellerCertifications([
     {
       seller_id: seller.id,
       certification_slug,
-      document_url: document_url ?? null,
+      documents,
+      document_url: document_url ?? documents[0]?.url ?? null,
       verification_status: 'pending',
       verified_by: null,
       verified_at: null,
