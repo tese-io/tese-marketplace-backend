@@ -137,11 +137,17 @@ export const POST = async (
   // the first entry's URL for backwards compat with any read path that
   // still hasn't migrated to reading `documents[]`. The validator's
   // transform guarantees documents.length >= 1 by this point.
+  //
+  // The `as unknown as Record<string, unknown>` cast is deliberate:
+  // Medusa's model.json() types the field as an object, but at runtime
+  // it stores any valid JSON — arrays included — as jsonb. Casting at
+  // the one call site keeps the runtime type accurate (an array of
+  // CertificationDocumentInput) while satisfying the DSL's static type.
   const [row] = await service.createSellerCertifications([
     {
       seller_id: seller.id,
       certification_slug,
-      documents,
+      documents: documents as unknown as Record<string, unknown>,
       document_url: document_url ?? documents[0]?.url ?? null,
       verification_status: 'pending',
       verified_by: null,
