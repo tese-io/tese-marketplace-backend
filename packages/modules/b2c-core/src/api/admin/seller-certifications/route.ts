@@ -41,12 +41,15 @@ export const GET = async (
   const take = req.queryConfig?.pagination?.take ?? 50
   const skip = req.queryConfig?.pagination?.skip ?? 0
 
+  // Newest first — reviewers work through the freshest submissions,
+  // and 'submitted Xh ago' badges in the UI read more naturally when
+  // the top row is the most recent.
   const [rows, count] = await service.listAndCountSellerCertifications(
     filters,
     {
       take,
       skip,
-      order: { created_at: 'ASC' }
+      order: { created_at: 'DESC' }
     }
   )
 
