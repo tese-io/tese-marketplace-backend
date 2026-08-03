@@ -22,14 +22,15 @@ export const VendorGetSellerCertificationsParams = createFindParams({
  * type: object
  * required:
  *   - certification_slug
+ *   - document_url
  * properties:
  *   certification_slug:
  *     type: string
  *     description: Slug of the certification from the shared catalogue
  *   document_url:
  *     type: string
- *     nullable: true
- *     description: URL of the uploaded certificate document (PDF/image)
+ *     format: uri
+ *     description: URL of the uploaded certificate document (PDF/image). Required — the admin verifier cannot approve a cert without evidence.
  *   expires_at:
  *     type: string
  *     format: date-time
@@ -41,6 +42,8 @@ export type VendorAttachSellerCertificationType = z.infer<
 >
 export const VendorAttachSellerCertification = z.object({
   certification_slug: z.string().min(1),
-  document_url: z.string().url().nullish(),
+  // Required: the admin verifier cannot approve a cert without evidence.
+  // Vendor panel enforces at the UI level; this is the defensive layer.
+  document_url: z.string().url({ message: 'A proof document URL is required' }),
   expires_at: z.coerce.date().nullish()
 })
