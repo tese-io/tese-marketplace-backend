@@ -6,6 +6,25 @@ import {
 import { HttpTypes } from '@medusajs/framework/types'
 import { MedusaError } from '@medusajs/framework/utils'
 
+// When Medusa's local file provider is in use (S3_ACCESS_KEY_ID unset —
+// see medusa-config.ts), uploaded files are returned with URLs hardcoded
+// to http://localhost:9000/static/... which only works from the backend
+// host itself. Rewrite that internal URL to the public host before we
+// hand the URL back to the vendor panel, so downstream consumers can
+// actually open the file. Prefer PUBLIC_BACKEND_URL, fall back to
+// MEDUSA_BACKEND_URL (already used elsewhere in the codebase); no-op
+// when neither is set (dev running locally with the panel).
+const rewritePublicUrl = (url: string): string => {
+  const publicBase = (
+    process.env.PUBLIC_BACKEND_URL ||
+    process.env.MEDUSA_BACKEND_URL ||
+    ''
+  ).replace(/\/$/, '')
+  if (!publicBase) return url
+  // Only rewrite the localhost placeholder — leave S3/R2/CDN URLs alone.
+  return url.replace(/^https?:\/\/localhost:9000/, publicBase)
+}
+
 export const POST = async (
   req: AuthenticatedMedusaRequest<HttpTypes.AdminUploadFile>,
   res: MedusaResponse
@@ -30,5 +49,10 @@ export const POST = async (
     }
   })
 
-  res.json({ files })
+  const rewritten = (files || []).map((f: any) => ({
+    ...f,
+    url: typeof f?.url === 'string' ? rewritePublicUrl(f.url) : f?.url
+  }))
+
+  res.json({ files: rewritten })
 }
