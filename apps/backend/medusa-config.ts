@@ -88,11 +88,14 @@ module.exports = defineConfig({
           {
             resolve: '@medusajs/medusa/workflow-engine-redis',
             options: { redis: { url: process.env.REDIS_URL } }
-          },
-          {
-            resolve: '@medusajs/medusa/locking-redis',
-            options: { redisUrl: process.env.REDIS_URL }
           }
+          // Note: no locking-redis here. That module needs to be wrapped
+          // in a `@medusajs/medusa/locking` parent with a providers[]
+          // array; standalone resolve fails with "No service found in
+          // module Locking" during boot. For single-instance staging,
+          // Medusa's default in-memory locking is fine (locks only need
+          // to be shared across instances if we scale to >1 Mercur pod,
+          // which isn't the case now). Revisit when scaling out.
         ]
       : []),
     ...(process.env.S3_ACCESS_KEY_ID
