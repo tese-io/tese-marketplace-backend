@@ -13,6 +13,16 @@ type ResendOptions = {
   from: string
 }
 
+const DEFAULT_FROM_NAME = 'Tese.io'
+
+function withDisplayName (from: string): string {
+  const trimmed = String(from || '').trim()
+  if (!trimmed) return trimmed
+  // Already has a display name: Name <email@x>
+  if (/<[^>]+>/.test(trimmed)) return trimmed
+  return `${DEFAULT_FROM_NAME} <${trimmed}>`
+}
+
 class ResendNotificationProviderService extends AbstractNotificationProviderService {
   static identifier = 'notification-resend'
   private resendClient: Resend
@@ -38,7 +48,7 @@ class ResendNotificationProviderService extends AbstractNotificationProviderServ
 
   async send(notification: ProviderSendNotificationDTO) {
     const { data, error } = await this.resendClient.emails.send({
-      from: notification.from?.trim() || this.options.from,
+      from: withDisplayName(notification.from?.trim() || this.options.from),
       to: notification.to,
       subject: notification.content?.subject as string,
       react: emailTemplates[notification.template](notification.data)

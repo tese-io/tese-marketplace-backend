@@ -1,3 +1,5 @@
+import { TeseBrandedLayout, teseHeadingStyle } from "./tese-branded-layout"
+
 interface EmailTemplateProps {
   data: {
     user_name: string
@@ -37,18 +39,8 @@ export const BuyerOrderTransferRequestEmailTemplate: React.FC<
   const { order } = data
 
   return (
-    <div
-      style={{
-        maxWidth: 600,
-        margin: '0 auto',
-        fontFamily: 'Arial, sans-serif',
-        color: '#222',
-        background: '#fff',
-        padding: 24,
-        borderRadius: 10,
-      }}
-    >
-      <h1 style={{ fontSize: '1.8rem', marginBottom: 8 }}>
+    <TeseBrandedLayout>
+      <h1 style={teseHeadingStyle}>
         Order Transfer Request
       </h1>
       <p style={{ fontSize: '1.1rem', marginBottom: 24 }}>
@@ -269,6 +261,6 @@ export const BuyerOrderTransferRequestEmailTemplate: React.FC<
           {data.storefront_url}
         </div>
       </div>
-    </div>
+    </TeseBrandedLayout>
   )
 }
