@@ -8,6 +8,14 @@ module.exports = defineConfig({
   },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
+    // redisUrl feeds the Cache/EventBus/Workflows/Locking modules
+    // below. When unset, Medusa falls back to in-memory fakes and logs
+    // "redisUrl not found. A fake redis instance will be used." + the
+    // "Local Event Bus installed. Not recommended for production."
+    // warnings we hit on Railway staging first boot. Set REDIS_URL to
+    // a real Redis (Railway private-network URL, or public URL with
+    // password) to activate the Redis-backed modules.
+    redisUrl: process.env.REDIS_URL,
     databaseDriverOptions: process.env.NODE_ENV === 'production' ? {
       connection: {
         ssl: {
@@ -63,6 +71,30 @@ module.exports = defineConfig({
     }
   ],
   modules: [
+    // Redis-backed shared state modules. Only register when REDIS_URL
+    // is set — otherwise Medusa falls back to its in-memory defaults
+    // (fine for local dev, unsafe for staging/prod which has 18
+    // subscribers + 3 cron jobs relying on shared state).
+    ...(process.env.REDIS_URL
+      ? [
+          {
+            resolve: '@medusajs/medusa/cache-redis',
+            options: { redisUrl: process.env.REDIS_URL }
+          },
+          {
+            resolve: '@medusajs/medusa/event-bus-redis',
+            options: { redisUrl: process.env.REDIS_URL }
+          },
+          {
+            resolve: '@medusajs/medusa/workflow-engine-redis',
+            options: { redis: { url: process.env.REDIS_URL } }
+          },
+          {
+            resolve: '@medusajs/medusa/locking-redis',
+            options: { redisUrl: process.env.REDIS_URL }
+          }
+        ]
+      : []),
     ...(process.env.S3_ACCESS_KEY_ID
       ? [
           {
