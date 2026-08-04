@@ -46,13 +46,26 @@ module.exports = defineConfig({
       resolve: '@mercurjs/commission',
       options: {}
     },
-    {
-      resolve: '@mercurjs/algolia',
-      options: {
-        apiKey: process.env.ALGOLIA_API_KEY,
-        appId: process.env.ALGOLIA_APP_ID
-      }
-    },
+    // Algolia plugin only registers when both keys are actually present.
+    // The plugin's AlgoliaModuleService constructor eagerly calls
+    // algoliasearch(appId, apiKey), which throws
+    // "Neither apiKey nor config.authenticator provided" on empty/undefined
+    // and takes the whole boot down with it — no graceful fallback. Guarding
+    // the registration here means: env vars set → search sync works;
+    // env vars missing → Mercur still boots (search subscribers silently
+    // no-op). Dev uses ALGOLIA_APP_ID=dummy/ALGOLIA_API_KEY=dummy which are
+    // truthy and pass this guard, matching pre-guard behavior.
+    ...(process.env.ALGOLIA_APP_ID && process.env.ALGOLIA_API_KEY
+      ? [
+          {
+            resolve: '@mercurjs/algolia',
+            options: {
+              apiKey: process.env.ALGOLIA_API_KEY,
+              appId: process.env.ALGOLIA_APP_ID
+            }
+          }
+        ]
+      : []),
     {
       resolve: '@mercurjs/reviews',
       options: {}
