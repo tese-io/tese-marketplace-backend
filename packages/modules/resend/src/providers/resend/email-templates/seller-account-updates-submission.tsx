@@ -1,3 +1,5 @@
+import { TeseBrandedLayout, teseHeadingStyle } from "./tese-branded-layout"
+
 interface EmailTemplateProps {
   data: {
 		user_name: string,
@@ -8,16 +10,8 @@ interface EmailTemplateProps {
 
 export const SellerAccountSubmissionEmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({ data }) => {
   return (
-    <div style={{
-      maxWidth: 600,
-      margin: '0 auto',
-      fontFamily: 'Arial, sans-serif',
-      color: '#222',
-      background: '#fff',
-      padding: 24,
-      borderRadius: 10
-    }}>
-      <h1>Hello, {data.user_name} 👋</h1>
+    <TeseBrandedLayout>
+      <h1 style={teseHeadingStyle}>Hello, {data.user_name} 👋</h1>
       <p>We are thrilled about your interest in collaborating with us.</p>
       <p>
         Your application is currently being reviewed by our team. Please expect a response within [three] business days.
@@ -31,6 +25,6 @@ export const SellerAccountSubmissionEmailTemplate: React.FC<Readonly<EmailTempla
         <div style={{ fontWeight: 600 }}>The {data.store_name} Team</div>
         <div style={{ color: '#888', marginTop: 4 }}>{data.storefront_url}</div>
       </div>
-    </div>
+    </TeseBrandedLayout>
   )
 }

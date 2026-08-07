@@ -1,3 +1,5 @@
+import { TeseBrandedLayout, teseHeadingStyle } from "./tese-branded-layout"
+
 interface EmailTemplateProps {
   data: {
     order: {
@@ -24,16 +26,8 @@ export const SellerNewOrderEmailTemplate: React.FC<Readonly<EmailTemplateProps>>
   const { order } = data;
 
   return (
-    <div style={{
-      maxWidth: 600,
-      margin: '0 auto',
-      fontFamily: 'Arial, sans-serif',
-      color: '#222',
-      background: '#fff',
-      padding: 24,
-      borderRadius: 10
-    }}>
-      <h1 style={{ fontSize: '2rem', marginBottom: 8 }}>
+    <TeseBrandedLayout>
+      <h1 style={teseHeadingStyle}>
         Hello, {order.seller.name}!
         <br />
         You have received a new order!
@@ -100,6 +94,6 @@ export const SellerNewOrderEmailTemplate: React.FC<Readonly<EmailTemplateProps>>
         <div style={{ fontWeight: 600 }}>The {data.store_name} Team</div>
         <div style={{ color: '#888', marginTop: 4 }}>{data.storefront_url}</div>
       </div>
-    </div>
+    </TeseBrandedLayout>
   );
 };

@@ -1,3 +1,5 @@
+import { TeseBrandedLayout, teseCtaStyle, teseHeadingStyle } from "./tese-branded-layout"
+
 interface EmailTemplateProps {
   data: {
 		user_name: string,
@@ -37,33 +39,13 @@ interface EmailTemplateProps {
 
 export const SellerCanceledOrderEmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({ data }) => {
   return (
-    <div style={{
-      maxWidth: 600,
-      margin: '0 auto',
-      fontFamily: 'Arial, sans-serif',
-      color: '#222',
-      background: '#fff',
-      padding: 24,
-      borderRadius: 10
-    }}>
-      <h1>
+    <TeseBrandedLayout>
+      <h1 style={teseHeadingStyle}>
         An order #{data.order.display_id} has been cancelled.
       </h1>
 
 	    <div style={{ marginBottom: 24 }}>
-        <a
-          href={data.order_address}
-          style={{
-            display: 'inline-block',
-            padding: '10px 24px',
-            background: '#222',
-            color: '#fff',
-            borderRadius: 6,
-            textDecoration: 'none',
-            fontWeight: 600,
-            marginBottom: 8
-          }}
-        >
+        <a href={data.order_address} style={teseCtaStyle}>
           View Order Details
         </a>
         <div style={{ fontSize: 13, color: '#555', marginTop: 8 }}>
@@ -80,6 +62,6 @@ export const SellerCanceledOrderEmailTemplate: React.FC<Readonly<EmailTemplatePr
         <div style={{ fontWeight: 600 }}>The {data.store_name} Team</div>
         <div style={{ color: '#888', marginTop: 4 }}>{data.storefront_url}</div>
       </div>
-    </div>
+    </TeseBrandedLayout>
   )
 }

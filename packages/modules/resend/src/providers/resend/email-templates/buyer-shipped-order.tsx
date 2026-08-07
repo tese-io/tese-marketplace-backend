@@ -1,3 +1,5 @@
+import { TeseBrandedLayout, teseHeadingStyle } from "./tese-branded-layout"
+
 interface EmailTemplateProps {
   data: {
 		user_name: string,
@@ -35,8 +37,8 @@ interface EmailTemplateProps {
 
 export const BuyerOrderShippedEmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({ data }) => {
   return (
-    <div>
-      <h1>Your order #{data.order.trackingNumber} has been shipped!</h1>
+    <TeseBrandedLayout>
+      <h1 style={teseHeadingStyle}>Your order #{data.order.trackingNumber} has been shipped!</h1>
       <p>The package is on its way and will be in your hands soon.</p>
       <div>
         <p>
@@ -68,6 +70,6 @@ export const BuyerOrderShippedEmailTemplate: React.FC<Readonly<EmailTemplateProp
         <div style={{ fontWeight: 600 }}>The {data.store_name} Team</div>
         <div style={{ color: '#888', marginTop: 4 }}>{data.storefront_url}</div>
       </div>
-    </div>
+    </TeseBrandedLayout>
   )
 }

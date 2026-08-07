@@ -7,6 +7,11 @@ import {
 
 import { IntermediateEvents } from '@mercurjs/framework'
 
+import {
+  STOCK_LOCATION_GEO_MODULE,
+  StockLocationGeoModuleService
+} from '../../../../modules/stock-location-geo'
+
 import { VendorUpdateStockLocationType } from '../validators'
 
 /**
@@ -111,15 +116,54 @@ export const POST = async (
   res: MedusaResponse
 ) => {
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+  const remoteLink = req.scope.resolve(ContainerRegistrationKeys.REMOTE_LINK)
 
-  await updateStockLocationsWorkflow(req.scope).run({
-    input: {
-      selector: {
-        id: req.params.id
-      },
-      update: req.validatedBody
+  const { geo, ...locationUpdate } = req.validatedBody
+
+  if (Object.keys(locationUpdate).length > 0) {
+    await updateStockLocationsWorkflow(req.scope).run({
+      input: {
+        selector: {
+          id: req.params.id
+        },
+        update: locationUpdate
+      }
+    })
+  }
+
+  if (geo) {
+    const geoService: StockLocationGeoModuleService = req.scope.resolve(
+      STOCK_LOCATION_GEO_MODULE
+    )
+    // Cast to any — Medusa's .d.ts wrongly pluralizes StockLocationGeo → "Geoes"
+    // but the runtime pluralize() correctly returns "Geos". See create route for
+    // the full note.
+    const geoSvc = geoService as any
+    const existing = await geoSvc.listStockLocationGeos({
+      stock_location_id: req.params.id
+    })
+    if (existing.length > 0) {
+      await geoSvc.updateStockLocationGeos({
+        id: existing[0].id,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        location_precision: geo.location_precision
+      })
+    } else {
+      const [geoRecord] = await geoSvc.createStockLocationGeos([
+        {
+          stock_location_id: req.params.id,
+          latitude: geo.latitude,
+          longitude: geo.longitude,
+          location_precision: geo.location_precision
+        }
+      ])
+      await remoteLink.create({
+        [Modules.STOCK_LOCATION]: { stock_location_id: req.params.id },
+        [STOCK_LOCATION_GEO_MODULE]: { stock_location_geo_id: geoRecord.id }
+      })
     }
-  })
+  }
 
   const eventBus = req.scope.resolve(Modules.EVENT_BUS)
   await eventBus.emit({
@@ -185,6 +229,19 @@ export const DELETE = async (
   req: AuthenticatedMedusaRequest,
   res: MedusaResponse
 ) => {
+  const geoService: StockLocationGeoModuleService = req.scope.resolve(
+    STOCK_LOCATION_GEO_MODULE
+  )
+  // Cast to any — Medusa's .d.ts wrongly pluralizes StockLocationGeo → "Geoes"
+  // but the runtime pluralize() correctly returns "Geos".
+  const geoSvc = geoService as any
+  const existingGeo = await geoSvc.listStockLocationGeos({
+    stock_location_id: req.params.id
+  })
+  if (existingGeo.length > 0) {
+    await geoSvc.softDeleteStockLocationGeos([existingGeo[0].id])
+  }
+
   await deleteStockLocationsWorkflow(req.scope).run({
     input: {
       ids: [req.params.id]
