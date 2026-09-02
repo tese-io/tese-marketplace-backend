@@ -17,7 +17,14 @@ module.exports = {
   },
   testEnvironment: 'node',
   moduleFileExtensions: ['js', 'ts', 'json'],
-  modulePathIgnorePatterns: ['dist/']
+  modulePathIgnorePatterns: ['dist/'],
+  // This app holds the only jest setup in the monorepo, but most of the
+  // code lives in the workspace packages, so their tests would never be
+  // discovered from <rootDir> alone.
+  roots: ['<rootDir>', '<rootDir>/../../packages'],
+  // Packages build into .medusa/server; without this the compiled copy of
+  // each test is collected alongside the source and every case runs twice.
+  testPathIgnorePatterns: ['/node_modules/', '/\\.medusa/']
 }
 
 if (process.env.TEST_TYPE === 'integration:http') {
