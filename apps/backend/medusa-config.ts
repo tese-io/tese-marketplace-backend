@@ -126,7 +126,14 @@ module.exports = defineConfig({
                     secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
                     region: process.env.S3_REGION,
                     bucket: process.env.S3_BUCKET,
-                    endpoint: process.env.S3_ENDPOINT
+                    endpoint: process.env.S3_ENDPOINT,
+                    // The bucket is shared with the Tese backend, which
+                    // namespaces everything it writes by domain. Without a
+                    // prefix this provider defaults to '' and drops objects
+                    // at the bucket root, where nothing identifies them as
+                    // ours. Keep the trailing slash: the provider builds
+                    // keys as `${prefix}${name}-${ulid}${ext}`.
+                    prefix: process.env.S3_PREFIX || 'marketplace/uploads/private/'
                   }
                 }
               ]
