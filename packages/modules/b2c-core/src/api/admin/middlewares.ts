@@ -11,6 +11,7 @@ import { sellerMiddlewares } from "./sellers/middlewares";
 import { adminReservationsMiddlewares } from "./reservations/middlewares";
 import { collectionsMiddlewares } from "./collections/middlewares";
 import { productCategoriesMiddlewares } from "./product-categories/middlewares";
+import { validateReceivedUploads } from "../../shared/utils/upload-middleware";
 
 export const adminMiddlewares: MiddlewareRoute[] = [
   {
@@ -30,4 +31,11 @@ export const adminMiddlewares: MiddlewareRoute[] = [
   ...adminReservationsMiddlewares,
   ...collectionsMiddlewares,
   ...productCategoriesMiddlewares,
+  {
+    // Core Medusa already parses this path. We only validate the files it
+    // left on the request — a second multer would wipe `req.files`.
+    method: ["POST"],
+    matcher: "/admin/uploads",
+    middlewares: [validateReceivedUploads],
+  },
 ];

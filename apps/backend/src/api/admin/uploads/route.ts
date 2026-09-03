@@ -4,8 +4,12 @@ import {
 } from '@medusajs/framework/http'
 import { HttpTypes } from '@medusajs/framework/types'
 
-import { handleMarketplaceUploads } from '../../../shared/utils/upload-handler'
+import { handleMarketplaceUploads } from '../../../../../../packages/modules/b2c-core/src/shared/utils/upload-handler'
 
+/**
+ * Override Medusa core POST /admin/uploads so operator shop media uses
+ * the same public/private router as /vendor/uploads.
+ */
 export const POST = (
   req: AuthenticatedMedusaRequest<HttpTypes.AdminUploadFile>,
   res: MedusaResponse
