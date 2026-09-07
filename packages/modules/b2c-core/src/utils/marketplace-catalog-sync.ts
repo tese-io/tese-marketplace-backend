@@ -8,6 +8,11 @@ export type SellerEnrichment = {
   warehouse_country?: string | null
   ship_to_countries?: string[]
   verified_certifications?: string[]
+  // Seller-level tese-Verified badge (admin grant, seller.is_verified).
+  // Mirrored into MarketplaceCatalog so CNI recommendation cards can
+  // render the "Tese-verified" trust chip. Distinct from
+  // verified_certifications (cert slugs).
+  seller_tese_verified?: boolean
   // Multi-warehouse (Phase 5) — parallel arrays over every warehouse
   // the seller has pinned. Distance in the orchestrator's fuse_rank is
   // now min(distance to each warehouse). The scalar latitude/longitude/
@@ -45,6 +50,21 @@ export async function fetchSellerEnrichment (
   const query = container.resolve(ContainerRegistrationKeys.QUERY)
 
   const enrichment: SellerEnrichment = {}
+
+  // 0) Seller-level tese-Verified badge — the admin grant from
+  //    Marketplace Admin → Sellers (seller.is_verified). Own try-block
+  //    so a failure here never blocks the location/cert enrichment.
+  try {
+    const { data: sellers } = await query.graph({
+      entity: 'seller',
+      fields: ['is_verified'],
+      filters: { id: sellerId }
+    })
+    const seller = (sellers || [])[0] as { is_verified?: boolean } | undefined
+    enrichment.seller_tese_verified = Boolean(seller?.is_verified)
+  } catch (err) {
+    // Non-fatal — leave seller_tese_verified unset
+  }
 
   // 1) Warehouse coords — nearest stock_location_geo to the seller HQ,
   //    picked as the "primary" warehouse for map + distance calc.
