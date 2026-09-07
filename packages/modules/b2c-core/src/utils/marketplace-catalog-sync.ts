@@ -197,6 +197,10 @@ export async function fetchProductsForCatalogSync (
       'external_id',
       'metadata',
       'thumbnail',
+      // Fallback for the card image: products whose media was uploaded
+      // without an explicit thumbnail still get images[0].url projected
+      // into MarketplaceCatalog.product_image_url by the orchestrator.
+      'images.*',
       'updated_at',
       'tags.*',
       'variants.*',
