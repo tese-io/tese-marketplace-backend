@@ -37,9 +37,42 @@ export type CoverageRow = {
 export type ActivityHit = {
   code: string
   name: string
+  description?: string | null
   industry_vertical?: string | null
   domain?: string | null
   subset?: string | null
+}
+
+/** CoverageRow + the display fields the vendor panel renders in its table. */
+export type EnrichedCoverageRow = CoverageRow & {
+  activity_name?: string | null
+  activity_description?: string | null
+  industry_vertical?: string | null
+  domain?: string | null
+}
+
+/**
+ * Merge activity catalog hits into coverage rows so the panel can show
+ * "Rainwater harvesting system" instead of a bare TOU-ADAC-01.01. Pure —
+ * unit-tested; rows whose code has no hit pass through unchanged (the
+ * panel falls back to rendering the code).
+ */
+export function enrichCoverageRowsWithActivities(
+  rows: CoverageRow[],
+  activities: ActivityHit[]
+): EnrichedCoverageRow[] {
+  const byCode = new Map(activities.map((a) => [a.code, a]))
+  return rows.map((row) => {
+    const hit = byCode.get(row.activity_code)
+    if (!hit) return row
+    return {
+      ...row,
+      activity_name: hit.name || null,
+      activity_description: hit.description || null,
+      industry_vertical: hit.industry_vertical || null,
+      domain: hit.domain || null,
+    }
+  })
 }
 
 
@@ -198,12 +231,15 @@ export async function searchActivities(params: {
   industry_vertical?: string
   domain?: string
   limit?: number
+  /** Exact-code batch lookup (deduped server-side, capped at 100). */
+  codes?: string[]
 }): Promise<ActivityHit[]> {
   const search = new URLSearchParams()
   if (params.q) search.set('q', params.q)
   if (params.industry_vertical) search.set('industry_vertical', params.industry_vertical)
   if (params.domain) search.set('domain', params.domain)
   if (params.limit) search.set('limit', String(params.limit))
+  if (params.codes?.length) search.set('codes', params.codes.join(','))
 
   const response = await fetch(
     `${TESE_BACKEND_URL}/api/v3/nbs/activities/search?${search.toString()}`,
