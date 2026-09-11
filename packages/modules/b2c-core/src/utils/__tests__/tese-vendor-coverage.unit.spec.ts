@@ -53,3 +53,23 @@ describe('enrichCoverageRowsWithActivities', () => {
     expect(out[0].activity_description).toBeNull()
   })
 })
+
+// eslint-disable-next-line import/order
+import { normalizeSellerContactEmail } from '../marketplace-catalog-sync'
+
+describe('normalizeSellerContactEmail', () => {
+  it('passes real addresses through trimmed', () => {
+    expect(normalizeSellerContactEmail('  sushil@tese.io ')).toBe('sushil@tese.io')
+  })
+
+  it('filters migration placeholders to undefined', () => {
+    expect(normalizeSellerContactEmail('tenant-66fede@migration.local')).toBeUndefined()
+    expect(normalizeSellerContactEmail('X@MIGRATION.LOCAL')).toBeUndefined()
+  })
+
+  it('filters empty and non-addresses', () => {
+    expect(normalizeSellerContactEmail('')).toBeUndefined()
+    expect(normalizeSellerContactEmail(null)).toBeUndefined()
+    expect(normalizeSellerContactEmail('not-an-email')).toBeUndefined()
+  })
+})
