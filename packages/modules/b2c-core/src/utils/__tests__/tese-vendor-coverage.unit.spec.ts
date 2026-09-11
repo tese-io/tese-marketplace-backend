@@ -73,3 +73,18 @@ describe('normalizeSellerContactEmail', () => {
     expect(normalizeSellerContactEmail('not-an-email')).toBeUndefined()
   })
 })
+
+// eslint-disable-next-line import/order
+import { buildSourcingListQuery } from '../tese-vendor-sourcing'
+
+describe('buildSourcingListQuery', () => {
+  it('serializes statuses, kind and limit', () => {
+    expect(buildSourcingListQuery({ statuses: ['pending', 'in_progress'], kind: 'contact_sourcing', limit: 50 }))
+      .toBe('statuses=pending%2Cin_progress&kind=contact_sourcing&limit=50')
+  })
+
+  it('omits empty params entirely', () => {
+    expect(buildSourcingListQuery({})).toBe('')
+    expect(buildSourcingListQuery({ statuses: [] })).toBe('')
+  })
+})
