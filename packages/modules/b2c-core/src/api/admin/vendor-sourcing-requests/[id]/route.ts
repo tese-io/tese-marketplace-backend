@@ -18,6 +18,7 @@ export const POST = async (
     status?: string
     resolutionNotes?: string
     vendorsAdded?: number
+    foundEmail?: string
   }>,
   res: MedusaResponse
 ) => {

@@ -34,6 +34,7 @@ export type SourcingRequest = {
   status: 'pending' | 'in_progress' | 'complete' | 'cancelled'
   resolutionNotes: string
   vendorsAdded: number
+  foundEmail?: string
   completedAt: string | null
   createdAt: string
   updatedAt: string
@@ -82,7 +83,7 @@ export async function listSourcingRequests(params: {
 
 export async function patchSourcingRequest(
   id: string,
-  body: { status?: string; resolutionNotes?: string; vendorsAdded?: number }
+  body: { status?: string; resolutionNotes?: string; vendorsAdded?: number; foundEmail?: string }
 ): Promise<SourcingRequest> {
   const response = await fetch(
     `${TESE_BACKEND_URL}/api/v3/marketplace/vendor-sourcing/requests/${encodeURIComponent(id)}`,
