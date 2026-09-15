@@ -4,8 +4,10 @@ import { ContainerRegistrationKeys } from '@medusajs/framework/utils'
 import { fetchSellerByAuthActorId } from '../../../shared/infra/http/utils'
 import {
   deactivateSellerCoverage,
+  enrichCoverageRowsWithActivities,
   fetchSellerCoverage,
   isVendorCoverageConfigured,
+  searchActivities,
   upsertSellerCoverage,
 } from '../../../utils/tese-vendor-coverage'
 
@@ -39,7 +41,21 @@ export const GET = async (
       req.auth_context.actor_id,
       req.scope
     )
-    const rows = await fetchSellerCoverage(seller.id)
+    let rows = await fetchSellerCoverage(seller.id)
+
+    // Resolve display names for the panel's table in ONE batch lookup.
+    // Fail-soft: the declared list must never break because the catalog
+    // lookup did — rows fall back to bare codes.
+    if (rows.length) {
+      try {
+        const codes = [...new Set(rows.map((r) => r.activity_code))]
+        const hits = await searchActivities({ codes })
+        rows = enrichCoverageRowsWithActivities(rows, hits)
+      } catch {
+        // keep un-enriched rows
+      }
+    }
+
     return res.json({ rows, count: rows.length })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Vendor coverage fetch failed'

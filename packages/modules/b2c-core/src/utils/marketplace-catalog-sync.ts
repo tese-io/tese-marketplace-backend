@@ -8,6 +8,16 @@ export type SellerEnrichment = {
   warehouse_country?: string | null
   ship_to_countries?: string[]
   verified_certifications?: string[]
+  // Seller-level tese-Verified badge (admin grant, seller.is_verified).
+  // Mirrored into MarketplaceCatalog so CNI recommendation cards can
+  // render the "Tese-verified" trust chip. Distinct from
+  // verified_certifications (cert slugs).
+  seller_tese_verified?: boolean
+  // Seller contact email — carried so "Add to project vendors" can
+  // pre-fill the quote-request address instead of the buyer typing it.
+  // Migration placeholders (*@migration.local) are filtered to
+  // undefined here so no downstream layer ever sees a fake address.
+  seller_contact_email?: string
   // Multi-warehouse (Phase 5) — parallel arrays over every warehouse
   // the seller has pinned. Distance in the orchestrator's fuse_rank is
   // now min(distance to each warehouse). The scalar latitude/longitude/
@@ -29,6 +39,22 @@ export type MarketplaceCatalogSyncPayload = {
 const enrichmentCache = new Map<string, SellerEnrichment>()
 
 /**
+ * A seller email is only usable for quote requests when it's a real
+ * address: migration placeholders (created for legacy catalog sellers
+ * whose original contacts were lost) must read as "no email" so the
+ * dashboard shows its ask-tese.io fallback instead of a dead address.
+ * Exported for unit tests.
+ */
+export function normalizeSellerContactEmail (
+  email: string | null | undefined
+): string | undefined {
+  const value = (email || '').trim()
+  if (!value || !value.includes('@')) return undefined
+  if (value.toLowerCase().endsWith('@migration.local')) return undefined
+  return value
+}
+
+/**
  * Build the seller-scoped enrichment blob used to populate the
  * MarketplaceCatalog row's location / shipping / cert fields. Memoised
  * for the lifetime of a sync batch since many products belong to the
@@ -45,6 +71,24 @@ export async function fetchSellerEnrichment (
   const query = container.resolve(ContainerRegistrationKeys.QUERY)
 
   const enrichment: SellerEnrichment = {}
+
+  // 0) Seller-level fields — the tese-Verified admin grant and the
+  //    contact email for quote-request pre-fill. Own try-block so a
+  //    failure here never blocks the location/cert enrichment.
+  try {
+    const { data: sellers } = await query.graph({
+      entity: 'seller',
+      fields: ['is_verified', 'email'],
+      filters: { id: sellerId }
+    })
+    const seller = (sellers || [])[0] as
+      | { is_verified?: boolean; email?: string | null }
+      | undefined
+    enrichment.seller_tese_verified = Boolean(seller?.is_verified)
+    enrichment.seller_contact_email = normalizeSellerContactEmail(seller?.email)
+  } catch (err) {
+    // Non-fatal — leave seller-level fields unset
+  }
 
   // 1) Warehouse coords — nearest stock_location_geo to the seller HQ,
   //    picked as the "primary" warehouse for map + distance calc.
@@ -177,6 +221,10 @@ export async function fetchProductsForCatalogSync (
       'external_id',
       'metadata',
       'thumbnail',
+      // Fallback for the card image: products whose media was uploaded
+      // without an explicit thumbnail still get images[0].url projected
+      // into MarketplaceCatalog.product_image_url by the orchestrator.
+      'images.*',
       'updated_at',
       'tags.*',
       'variants.*',

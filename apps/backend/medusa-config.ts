@@ -161,24 +161,36 @@ module.exports = defineConfig({
         ]
       }
     },
-    {
-      resolve: '@medusajs/medusa/payment',
-      options: {
-        providers: [
+    // Stripe payment provider only registers when STRIPE_SECRET_API_KEY is set.
+    // The @mercurjs/payment-stripe-connect provider constructor calls
+    // `new Stripe(apiKey)` eagerly, and Stripe's SDK throws
+    // "Neither apiKey nor config.authenticator provided" if apiKey is falsy —
+    // which crashes the whole Medusa boot. Guarding registration the same way
+    // as Algolia so a missing env var no-ops the payment module instead of
+    // taking down the app. Payments won't work without this env var — this
+    // guard is a safety net, not a substitute for setting STRIPE_SECRET_API_KEY.
+    ...(process.env.STRIPE_SECRET_API_KEY
+      ? [
           {
-            resolve:
-              '@mercurjs/payment-stripe-connect/providers/stripe-connect',
-            id: 'stripe-connect',
+            resolve: '@medusajs/medusa/payment',
             options: {
-              apiKey: process.env.STRIPE_SECRET_API_KEY,
-              webhookSecret:
-                process.env.STRIPE_PAYMENT_WEBHOOK_SECRET ??
-                process.env.STRIPE_WEBHOOK_SECRET
+              providers: [
+                {
+                  resolve:
+                    '@mercurjs/payment-stripe-connect/providers/stripe-connect',
+                  id: 'stripe-connect',
+                  options: {
+                    apiKey: process.env.STRIPE_SECRET_API_KEY,
+                    webhookSecret:
+                      process.env.STRIPE_PAYMENT_WEBHOOK_SECRET ??
+                      process.env.STRIPE_WEBHOOK_SECRET
+                  }
+                }
+              ]
             }
           }
         ]
-      }
-    },
+      : []),
     {
       resolve: '@medusajs/medusa/notification',
       options: {

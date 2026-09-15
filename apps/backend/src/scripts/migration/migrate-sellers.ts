@@ -89,6 +89,34 @@ export async function resolveOrCreateSellerForTenant (
   return seller.id
 }
 
+/**
+ * Idempotently ensure the seller ↔ product link exists. Used by the repair
+ * pass for products created before the missing-tenant fix (they exist in
+ * Medusa but have no owning seller).
+ */
+async function ensureSellerProductLink (
+  container: MedusaContainer,
+  sellerId: string,
+  productId: string,
+  logger: { info: (msg: string) => void }
+): Promise<void> {
+  const query = container.resolve(ContainerRegistrationKeys.QUERY)
+  const { data } = await query.graph({
+    entity: 'product',
+    fields: ['id', 'seller.id'],
+    filters: { id: productId }
+  })
+  const linkedSellerId = (data?.[0] as { seller?: { id?: string } })?.seller?.id
+  if (linkedSellerId) return // already owned — nothing to do
+
+  const link = container.resolve(ContainerRegistrationKeys.LINK)
+  await link.create({
+    [SELLER_MODULE]: { seller_id: sellerId },
+    [Modules.PRODUCT]: { product_id: productId }
+  })
+  logger.info(`Repaired seller link: ${sellerId} -> ${productId}`)
+}
+
 export async function migrateMongoStoreProducts ({
   container,
   mongoUrl,
@@ -129,28 +157,42 @@ export async function migrateMongoStoreProducts ({
   for await (const doc of cursor) {
     const externalId = mongoId(doc._id)
     try {
+      // Resolve the owning seller FIRST so both the create path and the
+      // already-exists repair path below can use it. Legacy catalogs
+      // (Shopify-era imports) reference tenant_ids that no longer exist in
+      // Mongo — those products must still get a seller, else they land
+      // ownerless in Medusa (invisible to the admin Sellers panel and
+      // ineligible for tese-Verified). A missing tenant gets a stub whose
+      // seller name falls back to doc.vendor, then "Vendor <id-tail>".
+      let sellerId: string | null = null
+      if (doc.tenant_id) {
+        const tenant = await db
+          .collection<MongoTenant>('tenants')
+          .findOne({ _id: doc.tenant_id as never })
+        const tenantOrStub =
+          tenant ??
+          ({ _id: doc.tenant_id, company_name: null } as unknown as MongoTenant)
+        sellerId = await resolveOrCreateSellerForTenant(
+          container,
+          tenantOrStub,
+          doc.vendor
+        )
+      }
+
       const [existing] = await productService.listProducts(
         { external_id: externalId },
         { select: ['id', 'external_id'], take: 1 }
       )
       if (existing) {
         productMap[externalId] = existing.id
+        // Repair pass: earlier script versions created products without a
+        // seller when the tenant lookup failed. Ensure the link exists so
+        // re-running the migration heals them instead of skipping past.
+        if (sellerId) {
+          await ensureSellerProductLink(container, sellerId, existing.id, logger)
+        }
         skipped++
         continue
-      }
-
-      let sellerId: string | null = null
-      if (doc.tenant_id) {
-        const tenant = await db
-          .collection<MongoTenant>('tenants')
-          .findOne({ _id: doc.tenant_id as never })
-        if (tenant) {
-          sellerId = await resolveOrCreateSellerForTenant(
-            container,
-            tenant,
-            doc.vendor
-          )
-        }
       }
 
       const productInput = mapMongoStoreProductToMedusaInput(doc, salesChannel.id)
