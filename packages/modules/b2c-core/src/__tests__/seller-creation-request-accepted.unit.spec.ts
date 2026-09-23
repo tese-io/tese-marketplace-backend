@@ -4,14 +4,19 @@
  * The accepted-subscriber is the single claim-vs-create decision point:
  * a request carrying claim_target_seller_id must NEVER create a second
  * seller store, and one without it must create exactly as before.
+ *
+ * Lives in src/__tests__ (NOT src/subscribers/__tests__): Medusa's
+ * subscriber resource-loader imports EVERY file under subscribers/, and
+ * a jest.mock call outside jest crashes `medusa develop`'s reload with
+ * "jest is not defined".
  */
 
-jest.mock('../../workflows', () => ({
+jest.mock('../workflows', () => ({
   attachTeseSellerMemberWorkflow: { run: jest.fn() },
   createSellerWorkflow: { run: jest.fn() },
   linkTeseSellerWorkflow: { run: jest.fn() },
 }))
-jest.mock('../../utils/tese-vendor-claims', () => ({
+jest.mock('../utils/tese-vendor-claims', () => ({
   notifySellerLinked: jest.fn().mockResolvedValue({ ok: true }),
 }))
 
@@ -19,9 +24,9 @@ import {
   attachTeseSellerMemberWorkflow,
   createSellerWorkflow,
   linkTeseSellerWorkflow,
-} from '../../workflows'
-import { notifySellerLinked } from '../../utils/tese-vendor-claims'
-import handler from '../seller-creation-request-accepted'
+} from '../workflows'
+import { notifySellerLinked } from '../utils/tese-vendor-claims'
+import handler from '../subscribers/seller-creation-request-accepted'
 
 const attachRun = attachTeseSellerMemberWorkflow.run as jest.Mock
 const createRun = createSellerWorkflow.run as jest.Mock
