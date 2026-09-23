@@ -41,6 +41,16 @@ import { vendorStockLocationsMiddlewares } from "./stock-locations/middlewares";
 import { vendorStoresMiddlewares } from "./stores/middlewares";
 import { vendorUploadMiddlewares } from "./uploads/middlewares";
 
+/**
+ * AUTH-CRITICAL. The ONLY /vendor/* paths exempt from the approved-seller
+ * gate: signup, tese SSO provisioning, invite acceptance, and the B-05
+ * application-status read. Exact-match anchored — anything else under
+ * /vendor/* stays behind checkSellerApproved. Guarded by
+ * __tests__/seller-gate-exempt.unit.spec.ts; change both together.
+ */
+export const SELLER_GATE_EXEMPT_RE =
+  /^\/vendor\/(sellers(?:\/tese|\/application)?|invites\/accept)$/;
+
 export const vendorMiddlewares: MiddlewareRoute[] = [
   {
     matcher: "/vendor*",
@@ -72,6 +82,18 @@ export const vendorMiddlewares: MiddlewareRoute[] = [
     ],
   },
   {
+    // B-05 application status: an applicant whose seller is not yet
+    // approved has an auth identity but no actor — allowUnregistered
+    // lets them read their own application state.
+    matcher: "/vendor/sellers/application",
+    method: ["GET"],
+    middlewares: [
+      authenticate("seller", ["bearer", "session"], {
+        allowUnregistered: true,
+      }),
+    ],
+  },
+  {
     matcher: "/vendor/invites/accept",
     method: ["POST"],
     middlewares: [
@@ -84,11 +106,11 @@ export const vendorMiddlewares: MiddlewareRoute[] = [
     matcher: "/vendor/*",
     middlewares: [
       unlessBaseUrl(
-        /^\/vendor\/(sellers(?:\/tese)?|invites\/accept)$/,
+        SELLER_GATE_EXEMPT_RE,
         checkSellerApproved(["bearer", "session"])
       ),
       unlessBaseUrl(
-        /^\/vendor\/(sellers(?:\/tese)?|invites\/accept)$/,
+        SELLER_GATE_EXEMPT_RE,
         authenticate("seller", ["bearer", "session"], {
           allowUnregistered: false,
         })

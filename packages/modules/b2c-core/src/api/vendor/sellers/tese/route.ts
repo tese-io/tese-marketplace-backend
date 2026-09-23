@@ -2,9 +2,13 @@ import {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework"
-import { MedusaError, Modules } from "@medusajs/framework/utils"
+import {
+  ContainerRegistrationKeys,
+  MedusaError,
+  Modules,
+} from "@medusajs/framework/utils"
 
-import { MemberRole } from "@mercurjs/framework"
+import { MemberRole, SellerRequest } from "@mercurjs/framework"
 
 import { SELLER_MODULE } from "../../../../modules/seller"
 import {
@@ -12,6 +16,14 @@ import {
   createSellerWorkflow,
   linkTeseSellerWorkflow,
 } from "../../../../workflows/seller/workflows"
+import {
+  ClaimsLookupResult,
+  extractEmailDomain,
+  extractWebsiteHost,
+  isVendorClaimsConfigured,
+  lookupVendorDuplicates,
+  notifySellerLinked,
+} from "../../../../utils/tese-vendor-claims"
 
 /**
  * @oas [post] /vendor/sellers/tese
@@ -74,8 +86,104 @@ export const POST = async (
   const sellers = await sellerService.listSellers({ handle })
   const seller = sellers?.[0]
 
-  // First user of this tenant → create the store, this user becomes owner.
+  // First user of this tenant → claim-or-create (B-01).
   if (!seller) {
+    // Duplicate lookup fails OPEN: a cross-service blip must not stop a
+    // recruited vendor from provisioning; the reconciliation report
+    // catches stragglers.
+    let lookup: ClaimsLookupResult | null = null
+    if (isVendorClaimsConfigured()) {
+      try {
+        lookup = await lookupVendorDuplicates({ teseTenantId: tenantId })
+      } catch {
+        lookup = null
+      }
+    }
+
+    // Orphan scan: a seller for the same canonical domain whose handle is
+    // NOT tenant-keyed — i.e. a direct vendor-panel signup for what looks
+    // like the same legal entity. Creating now would make a second store
+    // permanently, so we route through the human-confirmed claim queue.
+    let orphan: { id: string; name: string; handle: string } | null = null
+    if (lookup?.domain_usable && lookup.domain) {
+      const allSellers = await sellerService.listSellers(
+        {},
+        { select: ["id", "name", "handle", "email", "website"], take: 1000 }
+      )
+      orphan =
+        (allSellers || []).find(
+          (s: any) =>
+            !String(s.handle || "").startsWith("tese-") &&
+            (extractEmailDomain(s.email) === lookup!.domain ||
+              extractWebsiteHost(s.website) === lookup!.domain)
+        ) ?? null
+    }
+
+    if (orphan) {
+      const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+      const {
+        data: [providerRow],
+      } = await query.graph({
+        entity: "provider_identity",
+        fields: ["id", "entity_id"],
+        filters: { auth_identity_id: authIdentityId },
+      })
+
+      // No provider row (shouldn't happen post-SSO, but never key the
+      // idempotency lookup on undefined — an undefined filter could
+      // match someone else's request): fall through to create.
+      if (!providerRow?.id) {
+        orphan = null
+      }
+      if (orphan) {
+
+      // Idempotent across re-logins: the pending claim request is keyed
+      // on the same submitter as a vendor-panel signup would be.
+      // Rejected history never counts — a declined claim can be retried.
+      const { data: priorRequests } = await query.graph({
+        entity: "request",
+        fields: ["id", "status"],
+        filters: { submitter_id: providerRow.id, type: "seller" },
+      })
+      const existingRequest = (priorRequests || []).find(
+        (r: { status?: string }) => r.status !== "rejected"
+      )
+      if (existingRequest) {
+        return res.status(202).json({
+          claim_pending: true,
+          request_id: existingRequest.id,
+          seller_name: orphan.name,
+        })
+      }
+
+      const eventBus = req.scope.resolve(Modules.EVENT_BUS)
+      await eventBus.emit({
+        name: SellerRequest.TO_CREATE,
+        data: {
+          data: {
+            seller: { name: meta.tese_tenant_name || handle, email },
+            member: { name, email },
+            auth_identity_id: authIdentityId,
+            provider_identity_id: providerRow?.entity_id,
+            // Pre-stamped claim: the vendor is requesting access to the
+            // existing store; an admin confirms in the requests queue.
+            claim_target_seller_id: orphan.id,
+            tese_tenant_id: tenantId,
+            origin: "tese_sso",
+          },
+          type: "seller",
+          submitter_id: providerRow.id,
+        },
+      })
+
+      return res.status(202).json({
+        claim_pending: true,
+        seller_name: orphan.name,
+      })
+      }
+    }
+
+    const candidate = lookup?.candidate
     const { result } = await createSellerWorkflow(req.scope).run({
       input: {
         seller: {
@@ -88,12 +196,26 @@ export const POST = async (
           // carries the same id ("tese-<tenantId>"), but keying off
           // metadata avoids depending on a naming convention downstream
           // and stays robust if handles ever get renamed.
-          metadata: { tese_tenant_id: tenantId }
+          metadata: { tese_tenant_id: tenantId },
+          // Prefill from the AI-discovered candidate (invitation path) —
+          // real discovered data, never fabricated (G-01).
+          ...(candidate?.logo_url ? { photo: candidate.logo_url } : {}),
+          ...(candidate?.website_url ? { website: candidate.website_url } : {}),
+          ...(candidate?.country ? { country_code: candidate.country } : {}),
         },
         member: { name, email, role: MemberRole.OWNER },
         auth_identity_id: authIdentityId,
       } as any,
     })
+
+    await notifySellerLinked({
+      domain: lookup?.domain ?? null,
+      teseTenantId: tenantId,
+      sellerId: (result as any).id,
+      sellerHandle: handle,
+      via: "seller_create",
+    })
+
     return res.status(201).json({ seller: result })
   }
 

@@ -3,12 +3,20 @@ import {
   MedusaRequest,
   MedusaResponse
 } from '@medusajs/framework'
-import { ContainerRegistrationKeys, Modules } from '@medusajs/framework/utils'
+import {
+  ContainerRegistrationKeys,
+  MedusaError,
+  Modules
+} from '@medusajs/framework/utils'
 import { createProductsWorkflow } from '@medusajs/medusa/core-flows'
 
 import { ProductRequestUpdatedEvent } from '@mercurjs/framework'
 
 import { fetchSellerByAuthActorId } from '../../../shared/infra/http/utils'
+import {
+  checkSellerSubmissionCompleteness,
+  formatIncompleteMessage
+} from '../../../utils/seller-completeness'
 import {
   OrderObject,
   ProductFilters,
@@ -163,6 +171,23 @@ export const POST = async (
 
   const { additional_data, variants_images, ...validatedBody } =
     req.validatedBody
+
+  // D-04 completeness gate — fires only when the product is being
+  // SUBMITTED (anything but an explicit draft). Saving a draft is
+  // always allowed; the vendor can explore before completing.
+  if (validatedBody.status !== 'draft') {
+    const completeness = await checkSellerSubmissionCompleteness(
+      req.scope,
+      seller.id,
+      { variantsPayload: validatedBody.variants }
+    )
+    if (!completeness.ok) {
+      throw new MedusaError(
+        MedusaError.Types.NOT_ALLOWED,
+        formatIncompleteMessage(completeness.missing)
+      )
+    }
+  }
 
   const mergedImages = mergeVariantImages(validatedBody.images, variants_images)
 

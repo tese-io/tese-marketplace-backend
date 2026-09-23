@@ -69,12 +69,27 @@ export async function POST(
     )
   }
 
-  if (req.validatedBody.status === 'rejected') {
+  const { claim_seller_id, ...reviewBody } = req.validatedBody
+
+  // B-06 / B-10: declining a seller application or a product submission
+  // requires a written reason — the applicant/vendor sees it.
+  if (
+    reviewBody.status === 'rejected' &&
+    (request.type === 'seller' || request.type === 'product') &&
+    !reviewBody.reviewer_note?.trim()
+  ) {
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      'A written reason is required to decline this request'
+    )
+  }
+
+  if (reviewBody.status === 'rejected') {
     await updateRequestWorkflow.run({
       input: {
         id: req.params.id,
         reviewer_id: req.auth_context.actor_id,
-        ...req.validatedBody
+        ...reviewBody
       },
       container: req.scope
     })
@@ -94,12 +109,43 @@ export async function POST(
     )
   }
 
+  // B-01: accept-as-claim. The reviewer chose to attach the applicant to
+  // an existing seller instead of creating a new store. The target is
+  // verified and stamped into request.data — the accept workflow writes
+  // data back and emits it, so the accepted-subscriber branches on it.
+  let requestData = request.data
+  if (claim_seller_id) {
+    if (request.type !== 'seller') {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        'claim_seller_id is only valid for seller requests'
+      )
+    }
+    // Resolved by registration key — the requests package has no
+    // compile-time dependency on the seller module.
+    const sellerService = req.scope.resolve('seller') as {
+      listSellers: (f: Record<string, unknown>) => Promise<{ id: string }[]>
+    }
+    const targets = await sellerService.listSellers({ id: claim_seller_id })
+    if (!targets?.length) {
+      throw new MedusaError(
+        MedusaError.Types.NOT_FOUND,
+        `Claim target seller ${claim_seller_id} does not exist`
+      )
+    }
+    requestData = {
+      ...(request.data as Record<string, unknown>),
+      claim_target_seller_id: claim_seller_id,
+      claim_decided_by: req.auth_context.actor_id
+    }
+  }
+
   const { result: createdResource } = await workflow(req.scope).run({
     input: {
       id: req.params.id,
       reviewer_id: req.auth_context.actor_id,
-      data: request.data,
-      ...req.validatedBody
+      data: requestData,
+      ...reviewBody
     },
     throwOnError: true
   })

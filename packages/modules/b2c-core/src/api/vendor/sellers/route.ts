@@ -61,18 +61,23 @@ export const POST = async (
     },
   });
 
-  const {
-    data: [existingRequest],
-  } = await query.graph({
+  const { data: existingRequests } = await query.graph({
     entity: "request",
-    fields: ["id"],
+    fields: ["id", "status"],
     filters: {
       submitter_id: identity.id,
       type: "seller",
     },
   });
 
-  if (existingRequest) {
+  // A REJECTED application does not dead-end the applicant — B-05 shows
+  // them the reviewer's reason precisely so they can fix it and
+  // re-apply. Only a live (pending/draft) or already-accepted request
+  // blocks a new one.
+  const blocking = (existingRequests || []).find(
+    (r: { status?: string }) => r.status !== "rejected"
+  );
+  if (blocking) {
     throw new MedusaError(
       MedusaError.Types.CONFLICT,
       "Request already exists!"

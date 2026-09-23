@@ -3,7 +3,7 @@ import { ContainerRegistrationKeys } from '@medusajs/framework/utils'
 
 import {
   isVendorCoverageConfigured,
-  searchActivities,
+  searchActivitiesWithMeta,
 } from '../../../../utils/tese-vendor-coverage'
 
 /**
@@ -38,8 +38,13 @@ export const GET = async (
     : 20
 
   try {
-    const activities = await searchActivities({ q, industry_vertical, domain, limit })
-    return res.json({ activities, count: activities.length })
+    const { activities, has_more } = await searchActivitiesWithMeta({
+      q,
+      industry_vertical,
+      domain,
+      limit,
+    })
+    return res.json({ activities, count: activities.length, has_more })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Activity search failed'
     logger.error(`Vendor activities/search: ${message}`)
