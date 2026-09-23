@@ -6,6 +6,7 @@ export * from "./create-payout-account-for-seller";
 export * from "./recalculate-onboarding";
 export * from "./export-seller-products";
 export * from "./import-seller-products";
+export * from "./validate-seller-products-import";
 export * from "./invite-seller";
 export * from "./sync-stripe-account";
 export * from "./accept-member-invite";

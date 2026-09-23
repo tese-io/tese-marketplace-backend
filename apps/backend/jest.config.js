@@ -27,7 +27,8 @@ if (process.env.TEST_TYPE === 'integration:http') {
 } else if (process.env.TEST_TYPE === 'unit') {
   module.exports.roots = [
     '<rootDir>/src',
-    '<rootDir>/../../packages/modules/b2c-core/src'
+    '<rootDir>/../../packages/modules/b2c-core/src',
+    '<rootDir>/../../packages/modules/requests/src'
   ]
   module.exports.testMatch = ['**/__tests__/**/*.unit.spec.[jt]s']
 }

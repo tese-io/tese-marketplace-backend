@@ -111,15 +111,39 @@ export const POST = async (
   const { certification_slug, documents, document_url, expires_at } =
     req.validatedBody
 
-  if (isCertificationsCatalogueConfigured()) {
+  // B-21 (Kuzi 2026-09-22): slug validation FAILS CLOSED. The catalogue
+  // check is the only thing standing between us and free-form
+  // certification claims, so a misconfigured or unreachable catalogue
+  // blocks cert submission with a visible error — never silent
+  // acceptance of unverified claims. Alert loudly when it trips.
+  if (!isCertificationsCatalogueConfigured()) {
+    console.error(
+      '[seller-certifications] REJECTING cert submission: TESE_BACKEND_API_KEY is not configured — certification validation unavailable (B-21 fail-closed)'
+    )
+    throw new MedusaError(
+      MedusaError.Types.NOT_ALLOWED,
+      'Certification verification is temporarily unavailable. Please try again later or contact support.'
+    )
+  }
+  let slugs: Set<string>
+  try {
     const catalogue = await fetchCertificationsCatalogue()
-    const slugs = new Set(catalogue.map((c) => c.slug))
-    if (!slugs.has(certification_slug)) {
-      throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
-        `Unknown certification slug: ${certification_slug}`
-      )
-    }
+    slugs = new Set(catalogue.map((c) => c.slug))
+  } catch (error) {
+    console.error(
+      '[seller-certifications] REJECTING cert submission: certifications catalogue unreachable (B-21 fail-closed):',
+      error instanceof Error ? error.message : error
+    )
+    throw new MedusaError(
+      MedusaError.Types.NOT_ALLOWED,
+      'Certification verification is temporarily unavailable. Please try again later or contact support.'
+    )
+  }
+  if (!slugs.has(certification_slug)) {
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      `Unknown certification slug: ${certification_slug}`
+    )
   }
 
   const existing = await service.listSellerCertifications({

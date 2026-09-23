@@ -76,9 +76,16 @@ export const AdminGetRequestsParams = createFindParams({
  *     type: string
  *     enum: [accepted,rejected]
  *     description: A status of the request
+ *   claim_seller_id:
+ *     type: string
+ *     description: >
+ *       Seller-type requests only: accept the application by attaching the
+ *       applicant to this existing seller instead of creating a new store
+ *       (B-01 claim flow). Ignored for every other request type.
  */
 export type AdminReviewRequestType = z.infer<typeof AdminReviewRequest>;
 export const AdminReviewRequest = z.object({
   status: z.enum(['accepted', 'rejected']),
-  reviewer_note: z.string()
+  reviewer_note: z.string(),
+  claim_seller_id: z.string().optional()
 });

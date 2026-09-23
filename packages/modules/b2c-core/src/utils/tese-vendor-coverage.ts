@@ -248,9 +248,53 @@ export async function searchActivities(params: {
       cache: 'no-store',
     }
   )
-  const json = (await response.json().catch(() => ({}))) as { activities?: ActivityHit[]; error?: string }
+  const json = (await response.json().catch(() => ({}))) as {
+    activities?: ActivityHit[]
+    has_more?: boolean
+    error?: string
+  }
   if (!response.ok) {
     throw new Error(json.error || `nbs activity search returned ${response.status}`)
   }
   return Array.isArray(json.activities) ? json.activities : []
+}
+
+/**
+ * Same search, but keeps the backend's `has_more` flag so the picker can
+ * tell the vendor their results were truncated (C6 fix — the proxy used
+ * to drop it, leaving a dead hint in the panel).
+ */
+export async function searchActivitiesWithMeta(params: {
+  q?: string
+  industry_vertical?: string
+  domain?: string
+  limit?: number
+  codes?: string[]
+}): Promise<{ activities: ActivityHit[]; has_more: boolean }> {
+  const search = new URLSearchParams()
+  if (params.q) search.set('q', params.q)
+  if (params.industry_vertical) search.set('industry_vertical', params.industry_vertical)
+  if (params.domain) search.set('domain', params.domain)
+  if (params.limit) search.set('limit', String(params.limit))
+  if (params.codes?.length) search.set('codes', params.codes.join(','))
+
+  const response = await fetch(
+    `${TESE_BACKEND_URL}/api/v3/nbs/activities/search?${search.toString()}`,
+    {
+      headers: { 'X-API-Key': TESE_BACKEND_API_KEY },
+      cache: 'no-store',
+    }
+  )
+  const json = (await response.json().catch(() => ({}))) as {
+    activities?: ActivityHit[]
+    has_more?: boolean
+    error?: string
+  }
+  if (!response.ok) {
+    throw new Error(json.error || `nbs activity search returned ${response.status}`)
+  }
+  return {
+    activities: Array.isArray(json.activities) ? json.activities : [],
+    has_more: Boolean(json.has_more),
+  }
 }

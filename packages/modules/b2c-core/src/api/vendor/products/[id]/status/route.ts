@@ -14,6 +14,11 @@ import {
   ConfigurationModuleService,
 } from "../../../../../modules/configuration";
 
+import { fetchSellerByAuthActorId } from "../../../../../shared/infra/http/utils";
+import {
+  checkSellerSubmissionCompleteness,
+  formatIncompleteMessage,
+} from "../../../../../utils/seller-completeness";
 import { VendorUpdateProductStatusType } from "../../validators";
 
 /**
@@ -74,6 +79,27 @@ export const POST = async (
       MedusaError.Types.NOT_ALLOWED,
       "This feature is disabled!"
     );
+  }
+
+  // D-04 completeness gate — a product may only LEAVE draft when the
+  // seller carries all four signals (activities, warehouse coordinates,
+  // contact email) and the product has a price.
+  if (req.validatedBody.status !== "draft") {
+    const seller = await fetchSellerByAuthActorId(
+      req.auth_context?.actor_id,
+      req.scope
+    );
+    const completeness = await checkSellerSubmissionCompleteness(
+      req.scope,
+      seller.id,
+      { productId: req.params.id }
+    );
+    if (!completeness.ok) {
+      throw new MedusaError(
+        MedusaError.Types.NOT_ALLOWED,
+        formatIncompleteMessage(completeness.missing)
+      );
+    }
   }
 
   const { result } = await updateProductsWorkflow(req.scope).run({

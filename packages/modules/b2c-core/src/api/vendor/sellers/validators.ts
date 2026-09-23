@@ -72,6 +72,16 @@ export const VendorGetSellerParams = createSelectParams();
  *     type: string
  *     nullable: true
  *     description: Seller tax id.
+ *   website:
+ *     type: string
+ *     nullable: true
+ *     description: Company website (http/https). Also drives duplicate
+ *       detection during application review.
+ *   company_type:
+ *     type: string
+ *     nullable: true
+ *     enum: [manufacturer, distributor, wholesaler, service_provider, startup, other]
+ *     description: Business type.
  *   member:
  *     type: object
  *     required:
@@ -112,6 +122,18 @@ export const VendorCreateSeller = z
     postal_code: z.string().nullish().optional(),
     country_code: z.string().nullish().optional(),
     tax_id: z.string().nullish().optional(),
+    website: httpUrl.optional().or(z.literal("")),
+    company_type: z
+      .enum([
+        "manufacturer",
+        "distributor",
+        "wholesaler",
+        "service_provider",
+        "startup",
+        "other",
+      ])
+      .nullish()
+      .optional(),
     member: z.object({
       name: z.string(),
       email: z.string().email(),
