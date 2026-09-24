@@ -6,6 +6,7 @@ import { adminCustomMiddlewares } from "./custom/middlewares";
 import { adminOrdersMiddlewares } from "./orders/middlewares";
 import { orderSetsMiddlewares } from "./order-sets/middlewares";
 import { adminProductsMiddlewares } from "./products/middlewares";
+import { adminBusinessVerificationsMiddlewares } from "./business-verifications/middlewares";
 import { adminSellerCertificationsMiddlewares } from "./seller-certifications/middlewares";
 import { sellerMiddlewares } from "./sellers/middlewares";
 import { adminReservationsMiddlewares } from "./reservations/middlewares";
@@ -24,6 +25,7 @@ export const adminMiddlewares: MiddlewareRoute[] = [
   ...configurationMiddleware,
   ...sellerMiddlewares,
   ...adminSellerCertificationsMiddlewares,
+  ...adminBusinessVerificationsMiddlewares,
   ...attributeMiddlewares,
   ...adminProductsMiddlewares,
   ...adminCustomMiddlewares,

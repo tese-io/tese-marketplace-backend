@@ -1,4 +1,5 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { randomUUID } from 'crypto'
 
 import {
@@ -43,6 +44,28 @@ const s3 = (): S3Client => {
 
 export const isRemoteStorageConfigured = (): boolean =>
   Boolean(process.env.S3_ACCESS_KEY_ID && process.env.S3_BUCKET)
+
+export const PRIVATE_READ_TTL_SECONDS = 5 * 60
+
+/**
+ * Short-lived read link for an object on the PRIVATE bucket (G-12: private
+ * documents are only ever served through signed, expiring links). Callers
+ * must validate the key belongs to the record being viewed — this helper
+ * signs whatever it is given.
+ */
+export const presignPrivateRead = async (
+  key: string,
+  ttlSeconds: number = PRIVATE_READ_TTL_SECONDS
+): Promise<string> => {
+  if (!isRemoteStorageConfigured()) {
+    throw new Error('Private storage is not configured')
+  }
+  return getSignedUrl(
+    s3(),
+    new GetObjectCommand({ Bucket: privateBucket(), Key: key }),
+    { expiresIn: ttlSeconds }
+  )
+}
 
 export const resolveUploadTarget = (
   approved: ApprovedUpload,

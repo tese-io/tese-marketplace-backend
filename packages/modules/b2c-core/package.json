@@ -57,7 +57,8 @@
     "yalc": "^1.0.0-pre.53"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.556.0"
+    "@aws-sdk/client-s3": "^3.556.0",
+    "@aws-sdk/s3-request-presigner": "^3.556.0"
   },
   "peerDependencies": {
     "@medusajs/admin-sdk": "2.11.3",
