@@ -4,9 +4,8 @@ import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
 import { SellerRequest } from "@mercurjs/framework";
 
 import { SELLER_MODULE } from "../modules/seller";
+import { scanSellersByDomain } from "../utils/seller-duplicate-scan";
 import {
-  extractEmailDomain,
-  extractWebsiteHost,
   isVendorClaimsConfigured,
   lookupVendorDuplicates,
 } from "../utils/tese-vendor-claims";
@@ -110,31 +109,11 @@ export default async function sellerCreationRequestCreatedDuplicatesHandler({
 
       // Local seller scan — data access only; the canonical domain comes
       // from tese-backend so both sides match on exactly the same key.
-      const sellers: DuplicateSignals["sellers"] = [];
+      let sellers: DuplicateSignals["sellers"] = [];
       let tenants: DuplicateSignals["tenants"] = [];
       if (lookup.domain_usable && lookup.domain) {
         const sellerService: any = container.resolve(SELLER_MODULE);
-        const allSellers = await sellerService.listSellers(
-          {},
-          { select: ["id", "name", "handle", "email", "website"], take: 1000 }
-        );
-        for (const s of allSellers || []) {
-          if (extractEmailDomain(s.email) === lookup.domain) {
-            sellers.push({
-              id: s.id,
-              name: s.name,
-              handle: s.handle,
-              matched_on: "seller_email_domain",
-            });
-          } else if (extractWebsiteHost(s.website) === lookup.domain) {
-            sellers.push({
-              id: s.id,
-              name: s.name,
-              handle: s.handle,
-              matched_on: "seller_website",
-            });
-          }
-        }
+        sellers = await scanSellersByDomain(sellerService, lookup.domain);
 
         tenants = await Promise.all(
           (lookup.tenants || []).map(async (t) => {
