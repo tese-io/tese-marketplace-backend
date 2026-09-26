@@ -25,6 +25,12 @@ export const Seller = model.define("seller", {
   website: model.text().nullable(),
   // e.g. manufacturer | distributor | wholesaler | service_provider | startup
   company_type: model.text().nullable(),
+  // Platform link keys and audit breadcrumbs, never vendor-editable:
+  // tese_tenant_id / previous_handle (B-01 SSO claim),
+  // merged_from_seller_ids (B-26 attach). Column added 2026-09-26 — earlier
+  // writes were silently dropped, so tese_tenant_id may be absent on old
+  // rows; readers keep the `tese-<tenantId>` handle fallback.
+  metadata: model.json().nullable(),
   members: model.hasMany(() => Member),
   invites: model.hasMany(() => MemberInvite),
   onboarding: model.hasOne(() => SellerOnboarding).nullable(),

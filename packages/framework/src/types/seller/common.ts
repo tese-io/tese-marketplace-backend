@@ -24,6 +24,9 @@ export type SellerDTO = {
   photo: string | null;
   website: string | null;
   company_type: string | null;
+  // Platform link keys / audit breadcrumbs (tese_tenant_id, previous_handle,
+  // merged_from_seller_ids). Never vendor-editable.
+  metadata?: Record<string, unknown> | null;
   members?: Partial<MemberDTO>[];
 };
 
