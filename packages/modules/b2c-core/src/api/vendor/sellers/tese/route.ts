@@ -24,6 +24,12 @@ import {
   lookupVendorDuplicates,
   notifySellerLinked,
 } from "../../../../utils/tese-vendor-claims"
+import {
+  canAdoptMembershipStore,
+  findSellerByTenantMetadata,
+  memberIdFromAuthIdentity,
+  tenantIdOf,
+} from "../../../../utils/tese-seller-lookup"
 
 /**
  * @oas [post] /vendor/sellers/tese
@@ -83,8 +89,65 @@ export const POST = async (
   const handle = `tese-${tenantId}`
 
   const sellerService: any = req.scope.resolve(SELLER_MODULE)
-  const sellers = await sellerService.listSellers({ handle })
-  const seller = sellers?.[0]
+  const logger = req.scope.resolve(ContainerRegistrationKeys.LOGGER)
+
+  // Which store is this tenant's? Three keys, most certain first:
+  //   1. the caller's own membership — covers every returning user
+  //      whatever their store is called,
+  //   2. the legacy tenant-keyed handle,
+  //   3. metadata.tese_tenant_id, the canonical key, which is what a
+  //      SECOND employee of the same tenant matches on.
+  // The handle alone is not enough: createSellerStep derives handles from
+  // the store name, so no store created here ever carried `tese-<id>`.
+  let seller: any = null
+
+  const memberId = memberIdFromAuthIdentity(identity)
+  if (memberId) {
+    const [member] = await sellerService.listMembers(
+      { id: memberId },
+      { select: ["id", "seller_id"] }
+    )
+    if (member?.seller_id) {
+      const [candidateSeller] = await sellerService.listSellers({ id: member.seller_id })
+      if (canAdoptMembershipStore(candidateSeller, tenantId)) {
+        seller = candidateSeller ?? null
+      } else {
+        // Same person, different tenant: they need that tenant's own store.
+        logger.info(
+          `tese SSO: member ${memberId} belongs to ${candidateSeller?.id} (tenant ${tenantIdOf(candidateSeller)}), not tenant ${tenantId} — resolving separately`
+        )
+      }
+    }
+  }
+
+  if (!seller) {
+    const [byHandle] = await sellerService.listSellers({ handle })
+    seller = byHandle ?? null
+  }
+
+  if (!seller) {
+    const all = await sellerService.listSellers(
+      {},
+      { select: ["id", "name", "handle", "email", "website", "metadata"], take: 1000 }
+    )
+    seller = findSellerByTenantMetadata(all, tenantId)
+  }
+
+  // Heal stores that predate the metadata column so the next login resolves
+  // on the canonical key instead of the membership fallback.
+  if (seller && tenantIdOf(seller) !== tenantId) {
+    try {
+      await sellerService.updateSellers({
+        id: seller.id,
+        metadata: { ...(seller.metadata ?? {}), tese_tenant_id: tenantId },
+      })
+      logger.info(`tese SSO: stamped tese_tenant_id ${tenantId} on ${seller.id}`)
+    } catch (e) {
+      logger.warn(
+        `tese SSO: could not stamp tese_tenant_id on ${seller.id} — ${(e as Error)?.message || e}`
+      )
+    }
+  }
 
   // First user of this tenant → claim-or-create (B-01).
   if (!seller) {
@@ -100,20 +163,23 @@ export const POST = async (
       }
     }
 
-    // Orphan scan: a seller for the same canonical domain whose handle is
-    // NOT tenant-keyed — i.e. a direct vendor-panel signup for what looks
-    // like the same legal entity. Creating now would make a second store
-    // permanently, so we route through the human-confirmed claim queue.
+    // Orphan scan: a seller for the same canonical domain that is NOT
+    // already bound to a tese tenant — i.e. a direct vendor-panel signup
+    // for what looks like the same legal entity. Creating now would make a
+    // second store permanently, so we route through the human-confirmed
+    // claim queue. Boundness is `tenantIdOf`, never the handle shape: every
+    // handle is a name slug, so a prefix test treats every tese store as an
+    // orphan and proposes claims against unrelated companies.
     let orphan: { id: string; name: string; handle: string } | null = null
     if (lookup?.domain_usable && lookup.domain) {
       const allSellers = await sellerService.listSellers(
         {},
-        { select: ["id", "name", "handle", "email", "website"], take: 1000 }
+        { select: ["id", "name", "handle", "email", "website", "metadata"], take: 1000 }
       )
       orphan =
         (allSellers || []).find(
           (s: any) =>
-            !String(s.handle || "").startsWith("tese-") &&
+            tenantIdOf(s) === null &&
             (extractEmailDomain(s.email) === lookup!.domain ||
               extractWebsiteHost(s.website) === lookup!.domain)
         ) ?? null
@@ -188,14 +254,14 @@ export const POST = async (
       input: {
         seller: {
           name: meta.tese_tenant_name || handle,
-          handle,
+          // No `handle` here on purpose: createSellerStep always derives it
+          // from the name, so passing one only looks like it works.
           // Persist the tese tenant_id explicitly on the seller record.
           // The marketplace-catalog sync (fetchProductsForCatalogSync)
           // reads seller.metadata.tese_tenant_id when populating the
-          // MarketplaceCatalog row's tenant_id field. The handle already
-          // carries the same id ("tese-<tenantId>"), but keying off
-          // metadata avoids depending on a naming convention downstream
-          // and stays robust if handles ever get renamed.
+          // MarketplaceCatalog row's tenant_id field, and it is what the
+          // lookup above resolves on — a naming convention in the handle
+          // would not survive a rename.
           metadata: { tese_tenant_id: tenantId },
           // Prefill from the AI-discovered candidate (invitation path) —
           // real discovered data, never fabricated (G-01).
@@ -212,7 +278,7 @@ export const POST = async (
       domain: lookup?.domain ?? null,
       teseTenantId: tenantId,
       sellerId: (result as any).id,
-      sellerHandle: handle,
+      sellerHandle: (result as any).handle ?? handle,
       via: "seller_create",
     })
 
