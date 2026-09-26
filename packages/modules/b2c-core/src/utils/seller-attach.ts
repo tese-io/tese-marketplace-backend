@@ -77,18 +77,26 @@ export async function attachSellerAndArchiveShell(
 
   await sellerService.softDeleteSellers([input.sourceSellerId])
 
-  const previous: string[] = Array.isArray(target.metadata?.merged_from_seller_ids)
-    ? target.metadata.merged_from_seller_ids
-    : []
-  await sellerService.updateSellers({
-    id: target.id,
-    metadata: {
-      ...(target.metadata || {}),
-      merged_from_seller_ids: previous.includes(input.sourceSellerId)
-        ? previous
-        : [...previous, input.sourceSellerId]
-    }
-  })
+  // Breadcrumb on the target; the verification row's merge_record is the
+  // record of truth, so this never blocks a merge whose members already moved.
+  try {
+    const previous: string[] = Array.isArray(target.metadata?.merged_from_seller_ids)
+      ? target.metadata.merged_from_seller_ids
+      : []
+    await sellerService.updateSellers({
+      id: target.id,
+      metadata: {
+        ...(target.metadata || {}),
+        merged_from_seller_ids: previous.includes(input.sourceSellerId)
+          ? previous
+          : [...previous, input.sourceSellerId]
+      }
+    })
+  } catch (e) {
+    console.error(
+      `[seller-attach] ${input.targetSellerId}: could not stamp merged_from_seller_ids — ${(e as Error)?.message || e}`
+    )
+  }
 
   const linkPair = (sellerId: string) => ({
     [SELLER_MODULE]: { seller_id: sellerId },
