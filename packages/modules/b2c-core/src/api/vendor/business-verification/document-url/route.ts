@@ -39,6 +39,12 @@ export const GET = async (
     { order: { created_at: 'DESC' }, take: 50 }
   )
   const { current } = deriveBusinessVerificationState(rows)
+  if (current?.document_purged_at) {
+    throw new MedusaError(
+      MedusaError.Types.NOT_FOUND,
+      'This document was deleted under the retention policy'
+    )
+  }
   if (!current || !isPrivateUploadKey(current.document_key)) {
     throw new MedusaError(MedusaError.Types.NOT_FOUND, 'No document on file')
   }

@@ -1,4 +1,9 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client
+} from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { randomUUID } from 'crypto'
 
@@ -90,6 +95,19 @@ export const presignPrivateRead = async (
     new GetObjectCommand({ Bucket: privateBucket(), Key: key }),
     { expiresIn: ttlSeconds }
   )
+}
+
+/**
+ * Remove an object from the PRIVATE bucket (retention sweeps). Idempotent
+ * on the storage side — deleting a missing key succeeds — so callers can
+ * safely retry. Throws when storage is not configured: a sweeper must
+ * never mark a document purged that it could not actually delete.
+ */
+export const deletePrivateObject = async (key: string): Promise<void> => {
+  if (!isRemoteStorageConfigured()) {
+    throw new Error('Private storage is not configured')
+  }
+  await s3().send(new DeleteObjectCommand({ Bucket: privateBucket(), Key: key }))
 }
 
 export const resolveUploadTarget = (
