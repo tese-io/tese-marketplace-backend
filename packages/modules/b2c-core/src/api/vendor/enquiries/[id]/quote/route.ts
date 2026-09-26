@@ -50,7 +50,11 @@ export const POST = async (
 
     const json = await response.json().catch(() => ({}))
     if (!response.ok) {
-      return res.status(response.status).json(json)
+      // tese-backend answers { status:false, msg } — surface it as `message`
+      // so the panel toast shows the real reason (e.g. the KYB gate).
+      return res
+        .status(response.status)
+        .json({ ...json, message: json?.message || json?.msg || 'Quote submission failed' })
     }
 
     return res.json(json?.data || json)
