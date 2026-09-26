@@ -30,6 +30,12 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   if (!row) {
     throw new MedusaError(MedusaError.Types.NOT_FOUND, 'Business verification not found')
   }
+  if (row.document_purged_at) {
+    throw new MedusaError(
+      MedusaError.Types.NOT_FOUND,
+      'This document was deleted under the retention policy; the decision record remains'
+    )
+  }
   // Only the key stored on THIS record is ever signed — the endpoint can
   // never be pointed at an arbitrary object.
   if (!isPrivateUploadKey(row.document_key)) {

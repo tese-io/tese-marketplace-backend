@@ -17,9 +17,12 @@ export const SellerVerification = model.define('seller_verification', {
   id: model.id({ prefix: 'sverif' }).primaryKey(),
   seller_id: model.text(),
   // Private object key (marketplace/uploads/private/…); never a public URL.
-  document_key: model.text(),
-  document_url: model.text(),
+  // Null once the retention sweeper (B-29 / K-02) deleted the file — the
+  // decision record below stays.
+  document_key: model.text().nullable(),
+  document_url: model.text().nullable(),
   document_filename: model.text().nullable(),
+  document_purged_at: model.dateTime().nullable(),
   document_kind: model.enum([
     'certificate_of_incorporation',
     'registration_extract',
