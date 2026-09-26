@@ -5,6 +5,7 @@ import {
   SELLER_VERIFICATIONS_MODULE,
   SellerVerificationsModuleService
 } from '../../../../../modules/seller-verifications'
+import { attachSellerAndArchiveShell, MergeRecord } from '../../../../../utils/seller-attach'
 
 import { computeDuplicateSignals, loadSellerSummaries } from '../../helpers'
 import { AdminReviewBusinessVerificationType } from '../../validators'
@@ -12,7 +13,7 @@ import { AdminReviewBusinessVerificationType } from '../../validators'
 /**
  * @oas [post] /admin/business-verifications/{id}/review
  * operationId: "AdminReviewBusinessVerification"
- * summary: "Approve (recording the verification method) or decline with a written reason"
+ * summary: "Approve (recording the verification method, optionally attaching the applicant to an existing store) or decline with a written reason"
  * x-authenticated: true
  * requestBody:
  *   content:
@@ -43,7 +44,9 @@ export const POST = async (
     )
   }
 
-  const { decision, reviewer_note, verification_method } = req.validatedBody
+  const { decision, reviewer_note, verification_method, attach_to_seller_id } =
+    req.validatedBody
+  const reviewer = req.auth_context.actor_id
 
   // Snapshot what the reviewer saw — the audit trail Kuzi asked for.
   const sellers = await loadSellerSummaries(req.scope, [row.seller_id])
@@ -52,17 +55,37 @@ export const POST = async (
     ? await computeDuplicateSignals(req.scope, { seller, legal_name: row.legal_name })
     : null
 
+  // B-26: the reviewer confirmed this is an existing store. Move the
+  // applicant over and archive the shell; the verification follows them.
+  let merge_record: MergeRecord | null = null
+  let effectiveSellerId = row.seller_id
+  if (decision === 'approve' && attach_to_seller_id) {
+    merge_record = await attachSellerAndArchiveShell(req.scope, {
+      sourceSellerId: row.seller_id,
+      targetSellerId: attach_to_seller_id,
+      verificationId: row.id,
+      reviewer
+    })
+    effectiveSellerId = attach_to_seller_id
+  }
+
   const [updated] = await service.updateSellerVerifications({
     selector: { id: row.id },
     data: {
+      seller_id: effectiveSellerId,
       status: decision === 'approve' ? 'verified' : 'rejected',
       verification_method: decision === 'approve' ? verification_method ?? null : null,
-      reviewed_by: req.auth_context.actor_id,
+      reviewed_by: reviewer,
       reviewed_at: new Date(),
       reviewer_note: reviewer_note?.trim() || null,
-      duplicate_signals: duplicate_signals as Record<string, unknown> | null
+      duplicate_signals: duplicate_signals as Record<string, unknown> | null,
+      merge_record: merge_record as Record<string, unknown> | null
     }
   })
 
-  res.status(200).json({ business_verification: { ...updated, seller: seller ?? null } })
+  const effectiveSeller = merge_record
+    ? (await loadSellerSummaries(req.scope, [effectiveSellerId])).get(effectiveSellerId) ?? null
+    : seller ?? null
+
+  res.status(200).json({ business_verification: { ...updated, seller: effectiveSeller } })
 }
