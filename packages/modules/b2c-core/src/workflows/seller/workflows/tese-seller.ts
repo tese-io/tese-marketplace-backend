@@ -1,9 +1,8 @@
 import { WorkflowResponse, createWorkflow } from "@medusajs/workflows-sdk"
-import { setAuthAppMetadataStep } from "@medusajs/medusa/core-flows"
 
 import { CreateMemberDTO } from "@mercurjs/framework"
 
-import { createMemberStep } from "../steps"
+import { createMemberStep, setSellerActorStep } from "../steps"
 
 type AttachTeseSellerMemberInput = {
   member: CreateMemberDTO
@@ -19,10 +18,9 @@ export const attachTeseSellerMemberWorkflow = createWorkflow(
   "attach-tese-seller-member",
   (input: AttachTeseSellerMemberInput) => {
     const member = createMemberStep(input.member)
-    setAuthAppMetadataStep({
+    setSellerActorStep({
       authIdentityId: input.auth_identity_id,
-      actorType: "seller",
-      value: member.id,
+      memberId: member.id,
     })
     return new WorkflowResponse(member)
   }
@@ -34,16 +32,17 @@ type LinkTeseSellerInput = {
 }
 
 /**
- * Re-points an auth identity at an existing member (idempotent re-login, or a
- * tenant/seller context switch). No new member is created.
+ * Re-points an auth identity at an existing member (re-login, or a
+ * tenant/seller context switch). No new member is created. Genuinely
+ * idempotent: `setSellerActorStep` overwrites, and does nothing at all when
+ * the identity already points at this member.
  */
 export const linkTeseSellerWorkflow = createWorkflow(
   "link-tese-seller",
   (input: LinkTeseSellerInput) => {
-    setAuthAppMetadataStep({
+    setSellerActorStep({
       authIdentityId: input.auth_identity_id,
-      actorType: "seller",
-      value: input.member_id,
+      memberId: input.member_id,
     })
     return new WorkflowResponse({ member_id: input.member_id })
   }
