@@ -13,6 +13,8 @@
 
 import { ContainerRegistrationKeys } from '@medusajs/framework/utils'
 
+import { SELLER_VERIFICATIONS_MODULE } from '../modules/seller-verifications'
+import { isBusinessVerified } from './business-verification'
 import { normalizeSellerContactEmail } from './marketplace-catalog-sync'
 import {
   fetchSellerCoverage,
@@ -24,12 +26,17 @@ export type CompletenessField =
   | 'warehouse_coordinates'
   | 'contact_email'
   | 'price'
+  | 'business_verification'
 
 export type CompletenessSignals = {
   activityCount: number | null // null = coverage service unavailable
   hasWarehouseCoordinates: boolean
   contactEmail: string | null
   hasPrice: boolean
+  // KYB (B-24, KYB-1a): a verified business registration document.
+  // Applies to every seller from the moment it ships (B-28: existing
+  // sellers keep published products, new submissions gate immediately).
+  businessVerified: boolean
 }
 
 export type CompletenessResult = {
@@ -42,6 +49,7 @@ export const FIELD_LABELS: Record<CompletenessField, string> = {
   warehouse_coordinates: 'warehouse location',
   contact_email: 'contact email',
   price: 'product price',
+  business_verification: 'business verification',
 }
 
 /** Machine-readable marker the panel parses out of the error message. */
@@ -68,6 +76,9 @@ export function missingFields(signals: CompletenessSignals): CompletenessField[]
   }
   if (!signals.hasPrice) {
     missing.push('price')
+  }
+  if (!signals.businessVerified) {
+    missing.push('business_verification')
   }
   return missing
 }
@@ -169,7 +180,25 @@ export async function gatherCompletenessSignals(
     hasPrice = false
   }
 
-  return { activityCount, hasWarehouseCoordinates, contactEmail, hasPrice }
+  // Business verification — local module, same database as everything
+  // else, so unlike the coverage signal this fails CLOSED: a lookup
+  // failure never lets an unverified business submit.
+  let businessVerified = false
+  try {
+    const verifications: any = scope.resolve(SELLER_VERIFICATIONS_MODULE)
+    const rows = await verifications.listSellerVerifications(
+      { seller_id: sellerId },
+      { take: 50 }
+    )
+    businessVerified = isBusinessVerified(rows)
+  } catch (error) {
+    console.error(
+      '[seller-completeness] business verification lookup failed — treating seller as unverified (fails closed):',
+      error instanceof Error ? error.message : error
+    )
+  }
+
+  return { activityCount, hasWarehouseCoordinates, contactEmail, hasPrice, businessVerified }
 }
 
 export async function checkSellerSubmissionCompleteness(

@@ -38,7 +38,7 @@ export const POST = async (
   }
   if (row.status !== 'pending') {
     throw new MedusaError(
-      MedusaError.Types.INVALID_ARGUMENT,
+      MedusaError.Types.NOT_ALLOWED,
       'This verification has already been reviewed'
     )
   }
