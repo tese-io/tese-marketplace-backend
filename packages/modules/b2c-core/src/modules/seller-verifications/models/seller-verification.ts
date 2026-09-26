@@ -41,5 +41,9 @@ export const SellerVerification = model.define('seller_verification', {
   reviewed_at: model.dateTime().nullable(),
   reviewer_note: model.text().nullable(),
   // Snapshot of the duplicate signals the reviewer saw when deciding.
-  duplicate_signals: model.json().nullable()
+  duplicate_signals: model.json().nullable(),
+  // B-26: when the reviewer attached the applicant to an existing store —
+  // {source_seller_id, target_seller_id, moved_member_ids, reviewer, at}.
+  // The shell store is soft-deleted (recoverable), never hard-deleted.
+  merge_record: model.json().nullable()
 })

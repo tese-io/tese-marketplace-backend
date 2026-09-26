@@ -47,6 +47,31 @@ export const isRemoteStorageConfigured = (): boolean =>
 
 export const PRIVATE_READ_TTL_SECONDS = 5 * 60
 
+const PRIVATE_PREFIX = 'marketplace/uploads/private/'
+
+/**
+ * Object key for a stored URL that points at OUR private bucket, or null
+ * for anything else (external links, public assets). Matches on the
+ * configured private host first, then on the private prefix as a path
+ * segment so rows written under an older S3_FILE_URL still resolve.
+ */
+export const privateKeyFromStoredUrl = (url: unknown): string | null => {
+  if (typeof url !== 'string' || !url.trim()) return null
+  const clean = url.trim().split('#')[0].split('?')[0]
+  const base = privateFileUrl()
+  let key: string | null = null
+  if (base && clean.startsWith(`${base}/`)) {
+    key = clean.slice(base.length + 1)
+  } else {
+    const i = clean.indexOf(`/${PRIVATE_PREFIX}`)
+    if (i >= 0) key = clean.slice(i + 1)
+  }
+  if (!key || !key.startsWith(PRIVATE_PREFIX)) return null
+  const rest = key.slice(PRIVATE_PREFIX.length)
+  if (!rest || rest.includes('/') || rest.includes('..')) return null
+  return key
+}
+
 /**
  * Short-lived read link for an object on the PRIVATE bucket (G-12: private
  * documents are only ever served through signed, expiring links). Callers

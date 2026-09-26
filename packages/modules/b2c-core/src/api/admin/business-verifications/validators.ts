@@ -34,6 +34,10 @@ export const AdminGetBusinessVerificationsParams = createFindParams({
  *     type: string
  *     enum: [document_only, registry_checked]
  *     description: Required on approve — how the reviewer verified (KYB-4).
+ *   attach_to_seller_id:
+ *     type: string
+ *     nullable: true
+ *     description: Approve only (B-26) — attach the applicant to this existing store and archive their shell store.
  */
 export type AdminReviewBusinessVerificationType = z.infer<
   typeof AdminReviewBusinessVerification
@@ -42,9 +46,19 @@ export const AdminReviewBusinessVerification = z
   .object({
     decision: z.enum(['approve', 'reject']),
     reviewer_note: z.string().max(2000).nullish(),
-    verification_method: z.enum(VERIFICATION_METHODS).nullish()
+    verification_method: z.enum(VERIFICATION_METHODS).nullish(),
+    // B-26: approve by attaching the applicant to this existing store;
+    // the applicant's own (shell) store is archived with a merge record.
+    attach_to_seller_id: z.string().trim().min(1).nullish()
   })
   .superRefine((body, ctx) => {
+    if (body.attach_to_seller_id && body.decision !== 'approve') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['attach_to_seller_id'],
+        message: 'attach_to_seller_id is only valid when approving'
+      })
+    }
     if (body.decision === 'reject' && !body.reviewer_note?.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
