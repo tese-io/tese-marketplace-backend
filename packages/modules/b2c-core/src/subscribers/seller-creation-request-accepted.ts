@@ -78,19 +78,30 @@ export default async function sellerCreationRequestAcceptedHandler({
       });
     }
 
-    // SSO-originated claim: converge every future tese login for this
-    // tenant onto the claimed store by binding the tenant key to it.
-    if (teseTenantId && seller.metadata?.tese_tenant_id !== teseTenantId) {
+    // SSO-originated claim: bind the tenant key to the claimed store so
+    // every future tese login for this tenant resolves to it.
+    //
+    // The handle is deliberately NOT renamed. It used to become
+    // `tese-<tenantId>` because the SSO lookup keyed on it, which meant a
+    // claim silently rewrote the store's public storefront URL into an
+    // opaque id. The lookup now keys on metadata (utils/tese-seller-lookup),
+    // so the rename buys nothing and costs a live URL.
+    const boundTenantId: string | null = seller.metadata?.tese_tenant_id ?? null;
+    if (teseTenantId && !boundTenantId) {
       await sellerService.updateSellers({
         id: seller.id,
-        handle: `tese-${teseTenantId}`,
         metadata: {
           ...(seller.metadata ?? {}),
           tese_tenant_id: teseTenantId,
-          // The old handle is a public storefront URL — keep it findable.
-          previous_handle: seller.handle,
         },
       });
+    } else if (teseTenantId && boundTenantId !== teseTenantId) {
+      // Another tenant already owns this store. The member attach above
+      // still grants the person access, but re-pointing the store itself
+      // would hand one company's store to another — never silently.
+      logger.warn(
+        `Seller claim ${request.id}: ${seller.id} is already bound to tese tenant ${boundTenantId}; not re-binding to ${teseTenantId}`
+      );
     }
 
     const notify = await notifySellerLinked({
