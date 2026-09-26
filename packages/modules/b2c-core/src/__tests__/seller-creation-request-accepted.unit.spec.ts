@@ -114,7 +114,7 @@ describe('seller-creation-request-accepted (claim-vs-create)', () => {
     )
   })
 
-  it('SSO-originated claim binds the tenant key onto the claimed store', async () => {
+  it('SSO-originated claim binds the tenant key without touching the public handle', async () => {
     const { container, sellerService } = makeContainer()
     await handler({
       ...requestEvent({
@@ -126,16 +126,37 @@ describe('seller-creation-request-accepted (claim-vs-create)', () => {
       container,
     } as never)
 
-    expect(sellerService.updateSellers).toHaveBeenCalledWith(
-      expect.objectContaining({
+    expect(sellerService.updateSellers).toHaveBeenCalledWith({
+      id: 'sel_TARGET',
+      metadata: { tese_tenant_id: 'TENANT1' },
+    })
+    // the storefront URL survives a claim
+    const [{ handle }] = sellerService.updateSellers.mock.calls[0]
+    expect(handle).toBeUndefined()
+  })
+
+  it('never re-binds a store that already belongs to another tenant', async () => {
+    const { container, sellerService } = makeContainer({
+      retrieveSeller: jest.fn().mockResolvedValue({
         id: 'sel_TARGET',
-        handle: 'tese-TENANT1',
-        metadata: expect.objectContaining({
-          tese_tenant_id: 'TENANT1',
-          previous_handle: 'acme-marine',
-        }),
-      })
-    )
+        handle: 'acme-marine',
+        metadata: { tese_tenant_id: 'TENANT_OTHER' },
+      }),
+    })
+    await handler({
+      ...requestEvent({
+        claim_target_seller_id: 'sel_TARGET',
+        tese_tenant_id: 'TENANT1',
+        member: { name: 'Al', email: 'al@acmemarine.mu' },
+        auth_identity_id: 'auth_1',
+      }),
+      container,
+    } as never)
+
+    expect(sellerService.updateSellers).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('already bound to tese tenant'))
+    // the person still gets access
+    expect(attachRun).toHaveBeenCalledTimes(1)
   })
 
   it('no claim target: creates the store exactly as before', async () => {
