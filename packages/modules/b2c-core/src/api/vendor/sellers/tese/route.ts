@@ -99,38 +99,53 @@ export const POST = async (
   //      SECOND employee of the same tenant matches on.
   // The handle alone is not enough: createSellerStep derives handles from
   // the store name, so no store created here ever carried `tese-<id>`.
+  // Each step is best-effort: this is the sign-in path, and a lookup that
+  // cannot answer must degrade to the next key rather than lock the vendor
+  // out. Only a total miss falls through to claim-or-create.
   let seller: any = null
 
   const memberId = memberIdFromAuthIdentity(identity)
   if (memberId) {
-    const [member] = await sellerService.listMembers(
-      { id: memberId },
-      { select: ["id", "seller_id"] }
-    )
-    if (member?.seller_id) {
-      const [candidateSeller] = await sellerService.listSellers({ id: member.seller_id })
-      if (canAdoptMembershipStore(candidateSeller, tenantId)) {
-        seller = candidateSeller ?? null
-      } else {
-        // Same person, different tenant: they need that tenant's own store.
-        logger.info(
-          `tese SSO: member ${memberId} belongs to ${candidateSeller?.id} (tenant ${tenantIdOf(candidateSeller)}), not tenant ${tenantId} — resolving separately`
-        )
+    try {
+      const [member] = await sellerService.listMembers({ id: memberId })
+      if (member?.seller_id) {
+        const [candidateSeller] = await sellerService.listSellers({
+          id: member.seller_id,
+        })
+        if (canAdoptMembershipStore(candidateSeller, tenantId)) {
+          seller = candidateSeller ?? null
+        } else {
+          // Same person, different tenant: they need that tenant's own store.
+          logger.info(
+            `tese SSO: member ${memberId} belongs to ${candidateSeller?.id} (tenant ${tenantIdOf(candidateSeller)}), not tenant ${tenantId} — resolving separately`
+          )
+        }
       }
+    } catch (e) {
+      logger.warn(
+        `tese SSO: membership lookup failed for ${memberId} — ${(e as Error)?.message || e}`
+      )
     }
   }
 
   if (!seller) {
-    const [byHandle] = await sellerService.listSellers({ handle })
-    seller = byHandle ?? null
+    try {
+      const [byHandle] = await sellerService.listSellers({ handle })
+      seller = byHandle ?? null
+    } catch (e) {
+      logger.warn(`tese SSO: handle lookup failed — ${(e as Error)?.message || e}`)
+    }
   }
 
   if (!seller) {
-    const all = await sellerService.listSellers(
-      {},
-      { select: ["id", "name", "handle", "email", "website", "metadata"], take: 1000 }
-    )
-    seller = findSellerByTenantMetadata(all, tenantId)
+    try {
+      const all = await sellerService.listSellers({}, { take: 1000 })
+      seller = findSellerByTenantMetadata(all, tenantId)
+    } catch (e) {
+      logger.warn(
+        `tese SSO: tenant-metadata scan failed — ${(e as Error)?.message || e}`
+      )
+    }
   }
 
   // Heal stores that predate the metadata column so the next login resolves

@@ -211,6 +211,31 @@ describe('POST /vendor/sellers/tese — resolving this tenant’s store', () => 
     expect(sellerService.updateSellers).not.toHaveBeenCalled()
   })
 
+  it('a lookup that throws degrades to the next key instead of failing sign-in', async () => {
+    lookupMock.mockResolvedValue(usableLookup)
+    const { req, res, sellerService, logger } = makeReq({
+      appMetadata: { seller_id: 'mem_1' },
+      members: [{ id: 'mem_1', seller_id: 'sel_MINE' }],
+      allSellers: [
+        {
+          id: 'sel_MINE',
+          name: 'Acme Marine Ltd',
+          handle: 'acme-marine-ltd',
+          metadata: { tese_tenant_id: 'TENANT1' },
+        },
+      ],
+    })
+    sellerService.listMembers.mockRejectedValueOnce(new Error('db hiccup'))
+
+    await POST(req as never, res as never)
+
+    // resolved by the metadata scan; the vendor is never locked out
+    expect(createRun).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('membership lookup failed'))
+    expect(res.statusCode).toBe(201)
+    expect(attachRun.mock.calls[0][0].input.member.seller_id).toBe('sel_MINE')
+  })
+
   it('legacy tenant-keyed handle still resolves', async () => {
     lookupMock.mockResolvedValue(usableLookup)
     const { req, res } = makeReq({
