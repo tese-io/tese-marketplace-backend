@@ -10,6 +10,7 @@ const complete = {
   hasWarehouseCoordinates: true,
   contactEmail: 'sales@acmemarine.mu',
   hasPrice: true,
+  businessVerified: true,
 }
 
 describe('missingFields (D-04 gate decision)', () => {
@@ -24,8 +25,21 @@ describe('missingFields (D-04 gate decision)', () => {
         hasWarehouseCoordinates: false,
         contactEmail: null,
         hasPrice: false,
+        businessVerified: false,
       })
-    ).toEqual(['activities', 'warehouse_coordinates', 'contact_email', 'price'])
+    ).toEqual([
+      'activities',
+      'warehouse_coordinates',
+      'contact_email',
+      'price',
+      'business_verification',
+    ])
+  })
+
+  it('KYB (B-24): an unverified business is blocked on its own', () => {
+    expect(missingFields({ ...complete, businessVerified: false })).toEqual([
+      'business_verification',
+    ])
   })
 
   it('flags each field independently', () => {
@@ -47,6 +61,7 @@ describe('missingFields (D-04 gate decision)', () => {
         hasWarehouseCoordinates: false,
         contactEmail: null,
         hasPrice: false,
+        businessVerified: true,
       })
     ).toEqual(['warehouse_coordinates', 'contact_email', 'price'])
   })
